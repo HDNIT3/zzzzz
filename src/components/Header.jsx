@@ -1,66 +1,68 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { 
-  Home, Film, User, Users, Calendar, BookOpen, Star, Hash, 
-  Clapperboard, UserCog, Tags, BarChart3, PieChart, ClipboardList, 
-  Settings, Shield 
+import {
+  Home, Film, User, Users, Calendar, BookOpen, Star, Hash,
+  Clapperboard, UserCog, BarChart3, PieChart, ClipboardList,
+  Settings, Shield
 } from "lucide-react";
+import cinema from "../assets/cinema.png";
 import { LoginForm } from "./modals/LoginForm";
 import { RegisterForm } from "./modals/RegisterForm";
-import { useAuth } from "../hooks/useAuth"; 
+import { useAuth } from "../hooks/useAuth";
 import "../styles/header.css";
 
 // Menu cơ bản
 const baseMenu = {
   CUSTOMER: [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/movies', label: 'Movies', icon: Film },
-    { path: '/services', label: 'Bookings', icon: BookOpen },
-    { path: '/events', label: 'Events', icon: Star },
-    { path: '/profile', label: 'Profile', icon: User }
+    { label: "Home", path: "/", icon: Home },
+    { label: "Movies - Booking", path: "/mov-bk", icon: Film },
+    { label: "My Profile", path: "/prof", icon: User },
+    { label: "My Bookings", path: "/bk-his", icon: BookOpen },
+    { label: "Reviews", path: "/rev", icon: Star },
+    { label: "Support", path: "/sup", icon: Hash }
   ],
   STAFF: [
-    { path: '/pos-booking', label: 'Booking', icon: Hash },
-    { path: '/customers', label: 'Customers', icon: Users },
-    { path: '/shifts', label: 'Shifts', icon: Calendar }
+    { label: "Home", path: "/", icon: Home },
+    { label: "POS - Booking", path: "/pos", icon: Clapperboard },
+    { label: "Customer", path: "/cus", icon: Users },
+    { label: "Transactions", path: "/trans", icon: Calendar },
+    { label: "Schedule", path: "/sched", icon: Calendar },
+    { label: "Support", path: "/sup", icon: Hash }
   ],
   MANAGER: [
-    { path: '/manage/operations', label: 'Manage Movies - Rooms - Showtimes', icon: Clapperboard },
-    { path: '/manage/human-resources', label: 'Staff & Shifts', icon: UserCog },
-    { path: '/manage/promotions', label: 'Manage Promotions', icon: Tags },
-    { path: '/reports/revenue', label: 'Revenue Report', icon: BarChart3 },
-    { path: '/reports/showtimes', label: 'Showtimes Report', icon: PieChart },
-    { path: '/reports/staff', label: 'Staff Report', icon: ClipboardList },
+    { label: "Home", path: "/", icon: Home },
+    { label: "POS - Booking", path: "/pos", icon: Clapperboard },
+    { label: "Customer", path: "/cus", icon: Users },
+    { label: "Transactions", path: "/trans", icon: Calendar },
+    { label: "Operation", path: "/op", icon: BarChart3 },
+    { label: "Events - Promotions", path: "/ev-prom", icon: PieChart },
+    { label: "Staff", path: "/staff", icon: UserCog },
+    { label: "Schedule", path: "/sched", icon: Calendar },
+    { label: "Reports", path: "/rep", icon: ClipboardList },
+    { label: "Support", path: "/sup", icon: Hash }
   ],
   ADMIN: [
-    { path: '/admin/system', label: 'System Settings', icon: Settings },
-    { path: '/admin/accounts', label: 'Manage Accounts', icon: Shield },
+    { label: "Home", path: "/", icon: Home },
+    { label: "POS - Booking", path: "/pos", icon: Clapperboard },
+    { label: "Customer", path: "/cus", icon: Users },
+    { label: "Transactions", path: "/trans", icon: Calendar },
+    { label: "Operation", path: "/op", icon: BarChart3 },
+    { label: "Events - Promotions", path: "/ev-prom", icon: PieChart },
+    { label: "Staff", path: "/staff", icon: UserCog },
+    { label: "Schedule", path: "/sched", icon: Calendar },
+    { label: "Reports", path: "/rep", icon: ClipboardList },
+    { label: "Settings", path: "/set", icon: Settings },
+    { label: "Security", path: "/sec", icon: Shield },
+    { label: "Support", path: "/sup", icon: Hash }
   ]
 };
-
-const roleHierarchy = {
-  CUSTOMER: ['CUSTOMER'],
-  STAFF: ['CUSTOMER', 'STAFF'],
-  MANAGER: ['CUSTOMER', 'STAFF', 'MANAGER'],
-  ADMIN: ['CUSTOMER', 'STAFF', 'MANAGER', 'ADMIN'],
-};
-
-function getMenuByRole(role) {
-  const roles = roleHierarchy[role] || [];
-  const menu = [];
-  roles.forEach(r => {
-    menu.push(...(baseMenu[r] || []));
-  });
-  return menu;
-}
 
 export default function Header() {
   const { user, logout } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  
-  // Get menu items based on user role
-  const menu = user ? getMenuByRole(user.role) : [];
+
+  const menu = user ? baseMenu[user.role] : [];
 
   const handleSwitchToRegister = () => {
     setShowLogin(false);
@@ -80,71 +82,76 @@ export default function Header() {
   return (
     <>
       <header className="cinema-header">
-        <div className="logo">CinemUTE</div>
-        
-        <div className="nav-container">
-          {/* Navigation Menu */}
-          {user && (
-            <nav>
-              <ul className="nav-menu">
-                {menu.map((item, idx) => (
-                  <li key={idx}>
-                    <Link to={item.path} className="nav-item">
-                      {item.icon && <item.icon className="nav-icon" />}
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+        <div className="header-left">
+          <div className="logo">CinemUTE</div>
+          <div className="icon"><img src={cinema} alt="#" /></div>
+        </div>
+
+        <div className="header-center">
+          <div className="nav-container">
+            {/* Navigation Menu */}
+            {user && (
+              <nav>
+                <ul className="nav-menu">
+                  {menu.map((item, idx) => (
+                    <li key={idx}>
+                      <Link to={item.path} className="nav-item">
+                        {item.icon && <item.icon className="nav-icon" />}
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+          </div>
+          <div className="header-right">
+            {/* Auth Section */}
+            {user ? (
+              <div className="user-info">
+                <span className="user-welcome">
+                  Welcome, {user.sub}
+                </span>
+                <button onClick={logout} className="logout-btn">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="header-auth-buttons">
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="header-auth-btn"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setShowRegister(true)}
+                  className="header-auth-btn primary"
+                >
+                  Register
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Login Modal */}
+          {showLogin && (
+            <LoginForm
+              onClose={handleCloseModals}
+              onSwitchToRegister={handleSwitchToRegister}
+              useAuth={useAuth}
+            />
           )}
 
-          {/* Auth Section */}
-          {user ? (
-            <div className="user-info">
-              <span className="user-welcome">
-                Welcome, {user.fullName || user.username}
-              </span>
-              <button onClick={logout} className="logout-btn">
-                Logout
-              </button>
-            </div>
-          ) : (
-            <div className="header-auth-buttons">
-              <button 
-                onClick={() => setShowLogin(true)} 
-                className="header-auth-btn"
-              >
-                Login
-              </button>
-              <button 
-                onClick={() => setShowRegister(true)} 
-                className="header-auth-btn primary"
-              >
-                Register
-              </button>
-            </div>
+          {/* Register Modal */}
+          {showRegister && (
+            <RegisterForm
+              onClose={handleCloseModals}
+              onSwitchToLogin={handleSwitchToLogin}
+              useAuth={useAuth}
+            />
           )}
         </div>
       </header>
-
-      {/* Login Modal */}
-      {showLogin && (
-        <LoginForm 
-          onClose={handleCloseModals}
-          onSwitchToRegister={handleSwitchToRegister}
-          useAuth={useAuth}
-        />
-      )}
-
-      {/* Register Modal */}
-      {showRegister && (
-        <RegisterForm 
-          onClose={handleCloseModals}
-          onSwitchToLogin={handleSwitchToLogin}
-          useAuth={useAuth}
-        />
-      )}
     </>
   );
 }
