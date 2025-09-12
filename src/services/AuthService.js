@@ -10,7 +10,6 @@ export async function loginRequest(username, password) {
   }
 
   const token = await res.text(); 
-  console.log(token);
   return token;
 }
 
