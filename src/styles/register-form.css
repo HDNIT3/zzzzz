@@ -1,5 +1,5 @@
 /* Reuse overlay */
-.auth-overlay {
+.register-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +13,7 @@
 }
 
 /* Modal */
-.auth-modal.register {
+.register-modal.register {
   background-color: #fff;
   padding: 2rem;
   border-radius: 12px;
@@ -39,22 +39,22 @@
 }
 
 /* Header */
-.auth-header {
+.register-header {
   text-align: center;
   margin-bottom: 1.5rem;
 }
-.auth-title {
+.register-title {
   font-size: 1.75rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
-.auth-subtitle {
+.register-subtitle {
   font-size: 0.95rem;
   color: #555;
 }
 
 /* Form */
-.auth-form {
+.register-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -84,7 +84,7 @@
   position: relative;
 }
 
-.auth-input {
+.register-input {
   width: 100%;
   padding: 0.5rem 0.75rem 0.5rem 2.5rem;
   border: 1px solid #ccc;
@@ -93,7 +93,7 @@
   outline: none;
   transition: border 0.2s;
 }
-.auth-input:focus {
+.register-input:focus {
   border-color: #3b82f6;
 }
 
@@ -114,7 +114,7 @@
 }
 
 /* Textarea adjustments */
-.auth-textarea {
+.register-textarea {
   resize: none;
   padding-top: 0.5rem;
 }
@@ -136,7 +136,7 @@
 }
 
 /* Button */
-.auth-btn {
+.register-btn {
   background-color: #3b82f6;
   color: #fff;
   padding: 0.6rem 1rem;
@@ -147,21 +147,21 @@
   font-weight: 500;
   transition: background 0.2s;
 }
-.auth-btn:disabled {
+.register-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.auth-btn:hover:not(:disabled) {
+.register-btn:hover:not(:disabled) {
   background-color: #2563eb;
 }
 
 /* Switch link */
-.auth-switch {
+.register-switch {
   text-align: center;
   margin-top: 1rem;
   font-size: 0.9rem;
 }
-.auth-switch-btn {
+.register-switch-btn {
   background: none;
   border: none;
   color: #3b82f6;

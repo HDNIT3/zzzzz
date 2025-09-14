@@ -98,18 +98,18 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
   };
 
   return (
-    <div className="auth-overlay" onClick={handleOverlayClick}>
-      <div className="auth-modal register">
+    <div className="register-overlay" onClick={handleOverlayClick}>
+      <div className="register-modal register">
         <button className="close-btn" onClick={onClose}>
           <X size={20} />
         </button>
 
-        <div className="auth-header">
-          <h2 className="auth-title">Join CinemUTE</h2>
-          <p className="auth-subtitle">Create your account to start your cinema journey</p>
+        <div className="register-header">
+          <h2 className="register-title">Join CinemUTE</h2>
+          <p className="register-subtitle">Create your account to start your cinema journey</p>
         </div>
 
-        <div className="auth-form">
+        <div className="register-form">
           {errors.general && <div className="error-banner">{errors.general}</div>}
 
           <div className="form-row">
@@ -122,7 +122,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                   placeholder="Choose a username"
                 />
               </div>
@@ -138,7 +138,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                   placeholder="Enter your email"
                 />
               </div>
@@ -156,7 +156,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                   placeholder="Create a password"
                 />
                 <button
@@ -179,7 +179,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                   placeholder="Confirm your password"
                 />
                 <button
@@ -203,7 +203,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="auth-input"
+                className="register-input"
                 placeholder="Enter your full name"
               />
             </div>
@@ -220,7 +220,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                   placeholder="Enter your phone number"
                 />
               </div>
@@ -234,7 +234,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="auth-input"
+                  className="register-input"
                 >
                   <option value="CUSTOMER">CUSTOMER</option>
                   <option value="STAFF">STAFF</option>
@@ -249,7 +249,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="auth-btn"
+            className="register-btn"
           >
             {isLoading ? (
               <div className="loading-content">
@@ -261,11 +261,11 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
             )}
           </button>
 
-          <div className="auth-switch">
+          <div className="register-switch">
             Already have an account?{" "}
             <button
               type="button"
-              className="auth-switch-btn"
+              className="register-switch-btn"
               onClick={onSwitchToLogin}
             >
               Sign in here
