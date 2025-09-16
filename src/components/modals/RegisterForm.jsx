@@ -132,7 +132,7 @@ export function RegisterForm({ onClose, onSwitchToLogin}) {
     };
 
     return (
-        <div className="auth-overlay" onClick={handleOverlayClick}>
+        <div className="register-overlay" onClick={handleOverlayClick}>
             <div className="auth-modal register">
                 <button className="close-btn" onClick={onClose}>
                     <X size={20} />
