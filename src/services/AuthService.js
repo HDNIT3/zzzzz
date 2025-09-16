@@ -1,4 +1,4 @@
-export async function loginRequest(username, password) {
+﻿export async function loginRequest(username, password) {
   const res = await fetch("http://localhost:8080/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -28,3 +28,30 @@ export async function registerRequest(userData) {
   return await res.json(); 
 }
 
+export async function sendOtpRequest(email) {
+    const res = await fetch("http://localhost:8080/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+
+    return await res.json(); 
+}
+
+export async function verifyOtpRequest(email, otp) {
+    const res = await fetch("http://localhost:8080/api/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+
+    return await res.json(); 
+}

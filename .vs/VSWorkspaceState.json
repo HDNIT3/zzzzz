@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\assets",
+    "\\src\\components",
+    "\\src\\components\\modals",
+    "\\src\\context",
+    "\\src\\hooks",
+    "\\src\\pages",
+    "\\src\\services"
+  ],
+  "SelectedNode": "\\src\\components\\modals\\RegisterForm.jsx",
+  "PreviewInSolutionExplorer": false
+}
