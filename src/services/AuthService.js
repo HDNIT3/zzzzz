@@ -1,57 +1,21 @@
-﻿export async function loginRequest(username, password) {
-  const res = await fetch("http://localhost:8080/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
+﻿import api from "./api";
 
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
-
-  const token = await res.text(); 
-  return token;
+export async function loginRequest(username, password) {
+  const res = await api.post("/auth/login", { username, password });
+  return res.data; // token string
 }
 
 export async function registerRequest(userData) {
-  // userData = { username, password, fullName, email, phoneNumber, role }
-  const res = await fetch("http://localhost:8080/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData),
-  });
-
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
-
-  return await res.json(); 
+  const res = await api.post("/auth/register", userData);
+  return res.data; // Account object
 }
 
 export async function sendOtpRequest(email) {
-    const res = await fetch("http://localhost:8080/api/otp/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-    });
-
-    if (!res.ok) {
-        throw new Error(await res.text());
-    }
-
-    return await res.json(); 
+  const res = await api.post("/api/otp/send", { email });
+  return res.data;
 }
 
 export async function verifyOtpRequest(email, otp) {
-    const res = await fetch("http://localhost:8080/api/otp/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-    });
-
-    if (!res.ok) {
-        throw new Error(await res.text());
-    }
-
-    return await res.json(); 
+  const res = await api.post("/api/otp/verify", { email, otp });
+  return res.data;
 }

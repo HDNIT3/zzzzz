@@ -39,7 +39,6 @@ export function AuthProvider({ children }) {
       const token = await loginRequest(username, password);
       setToken(token);
 
-      // Xóa trước để tránh lưu trùng
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
 
