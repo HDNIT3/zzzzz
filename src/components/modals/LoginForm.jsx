@@ -1,51 +1,65 @@
+// LoginForm.jsx
 import { useState } from "react";
 import { User, Lock, Eye, EyeOff, X } from "lucide-react";
-import "../../styles/login-form.css"
+import "../../styles/login-form.css";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
 export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    username: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [isRememberMe, setIsRememberMe] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
     }
-    
+
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleRememberMeChange = (e) => {
+    setIsRememberMe(e.target.checked);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     try {
-      await login(formData.username, formData.password);
+      const token = await login(formData.username, formData.password);
+
+      if (isRememberMe) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("username", formData.username);
+      } else {
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("username", formData.username);
+      }
+
       onClose();
     } catch (error) {
       setErrors({ general: "Invalid username or password" });
@@ -54,30 +68,38 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
     }
   };
 
-  // Handle click outside modal
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
+  // 👉 Khi bấm "Forgot password?" thì showForgotPassword = true
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordForm
+        onClose={onClose}
+        onSwitchToLogin={() => setShowForgotPassword(false)}
+      />
+    );
+  }
+
   return (
     <div className="login-overlay" onClick={handleOverlayClick}>
-      <div className="auth-modal">
+      <div className="login-modal">
         <button className="close-btn" onClick={onClose}>
           <X size={20} />
         </button>
-        
-        <div className="auth-header">
-          <h2 className="auth-title">Welcome Back</h2>
-          <p className="auth-subtitle">Sign in to your CinemUTE account</p>
+
+        <div className="login-header">
+          <h2 className="login-title">Welcome Back</h2>
+          <p className="login-subtitle">Sign in to your CinemUTE account</p>
         </div>
 
-        <div className="auth-form">
-          {errors.general && (
-            <div className="error-banner">{errors.general}</div>
-          )}
+        <div className="login-form">
+          {errors.general && <div className="error-banner">{errors.general}</div>}
 
+          {/* Username */}
           <div className="form-group">
             <label className="form-label">Username</label>
             <div className="input-wrapper">
@@ -87,13 +109,14 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="auth-input"
+                className="login-input"
                 placeholder="Enter your username"
               />
             </div>
             {errors.username && <div className="form-error">{errors.username}</div>}
           </div>
 
+          {/* Password */}
           <div className="form-group">
             <label className="form-label">Password</label>
             <div className="input-wrapper">
@@ -103,7 +126,7 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="auth-input"
+                className="login-input"
                 placeholder="Enter your password"
               />
               <button
@@ -117,20 +140,30 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
             {errors.password && <div className="form-error">{errors.password}</div>}
           </div>
 
+          {/* Options */}
           <div className="form-options">
             <label className="checkbox-wrapper">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={isRememberMe}
+                onChange={handleRememberMeChange}
+              />
               Remember me
             </label>
-            <button type="button" className="forgot-link">
+            <button
+              type="button"
+              className="forgot-link"
+              onClick={() => setShowForgotPassword(true)}
+            >
               Forgot password?
             </button>
           </div>
 
-          <button 
+          {/* Submit */}
+          <button
             onClick={handleSubmit}
-            disabled={isLoading} 
-            className="auth-btn"
+            disabled={isLoading}
+            className="login-btn"
           >
             {isLoading ? (
               <div className="loading-content">
@@ -142,11 +175,12 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
             )}
           </button>
 
-          <div className="auth-switch">
+          {/* Switch */}
+          <div className="login-switch">
             Don't have an account?{" "}
-            <button 
+            <button
               type="button"
-              className="auth-switch-btn" 
+              className="login-switch-btn"
               onClick={onSwitchToRegister}
             >
               Sign up here
