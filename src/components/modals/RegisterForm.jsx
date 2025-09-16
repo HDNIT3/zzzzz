@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Lock, Mail, Phone, Eye, EyeOff, X } from "lucide-react";
+import { User, Lock, Mail, Phone, Eye, EyeOff, X, Calendar } from "lucide-react";
 import "../../styles/register-form.css";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -252,6 +252,23 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   />
                 </div>
                 {errors.fullName && <div className="form-error">{errors.fullName}</div>}
+              </div>
+              
+              {/* Date of Birth */}
+              <div className="form-group">
+                <label className="form-label">Date of Birth *</label>
+                <div className="input-wrapper">
+                  <Calendar className="input-icon" />
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="register-input"
+                    placeholder="Enter your date of birth"
+                  />
+                </div>
+                {errors.dateOfBirth && <div className="form-error">{errors.dateOfBirth}</div>}
               </div>
 
               {/* Phone Number + Role */}
