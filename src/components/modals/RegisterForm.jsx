@@ -14,6 +14,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
     fullName: "",
     phoneNumber: "",
     role: "CUSTOMER",
+    businessCode: "",
   });
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -21,6 +22,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isCustomer, setIsCustomer] = useState(true)
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,6 +30,10 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+
+    if (name === "role") {
+      setIsCustomer(value === "CUSTOMER");
+    } 
   };
 
   const validateForm = () => {
@@ -117,6 +123,9 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log("Form Data:", formData);
+    
     if (!isOtpSent) {
       await handleSendOtp();
     } else {
@@ -307,6 +316,22 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                   {errors.role && <div className="form-error">{errors.role}</div>}
                 </div>
               </div>
+
+              {!isCustomer && (
+                <div className="form-group">
+                  <label className="form-label">Business Code</label>
+                  <div className="input-wrapper">
+                    <input 
+                    type="text" 
+                    name="businessCode"
+                    value={formData.businessCode}
+                    onChange={handleChange}
+                    className="register-input"
+                    placeholder="Enter code to identify your role"
+                    />                    
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="form-group">

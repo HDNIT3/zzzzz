@@ -19,8 +19,8 @@ export default function Home() {
             {/* Hot movies */}
             <div className="hot-mov-list movie-list hot-movies">
                 <div className="section-header">
-                    <h2>🔥 Phim Hot</h2>
-                    <p>Những bộ phim đang gây sốt tại rạp</p>
+                    <h2>🔥 Hot Movies</h2>
+                    <p>Movies that are currently popular</p>
                 </div>
                 <div className="movie-carousel">
                     <div className="movie-track">
@@ -44,8 +44,8 @@ export default function Home() {
             {/* Upcoming movies */}
             <div className="upcoming-mov-list movie-list upcoming-movies">
                 <div className="section-header">
-                    <h2>⭐ Phim Sắp Chiếu</h2>
-                    <p>Những bộ phim đáng mong chờ sắp ra mắt</p>
+                    <h2>⭐ Coming Soon</h2>
+                    <p>Movies that are coming soon</p>
                 </div>
                 <div className="movie-carousel">
                     <div className="movie-track">

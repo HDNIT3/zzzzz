@@ -2,12 +2,12 @@
 
 export async function loginRequest(username, password) {
   const res = await api.post("/auth/login", { username, password });
-  return res.data; // token string
+  return res.data; 
 }
 
 export async function registerRequest(userData) {
   const res = await api.post("/auth/register", userData);
-  return res.data; // Account object
+  return res.data; 
 }
 
 export async function sendOtpRequest(email) {
