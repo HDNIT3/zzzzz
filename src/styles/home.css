@@ -4,31 +4,6 @@
   padding: 15px;
 }
 
-/* Hero Section */
-.intro {
-  width: 100%;
-  text-align: center;
-  padding: 40px 20px;
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
-  background-size: cover;
-  background-position: center;
-  margin-top: 20px;
-  border-radius: 20px 15px 0;
-  position: relative;
-  overflow: hidden;
-  color: #fff;
-  font-family: 'Segoe UI', sans-serif;
-  font-weight: 900;
-  font-size: 40px;
-}
-
-.intro p {
-  max-width: 1600px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-
 /* Section Headers */
 .section-header {
   margin: 40px 0 20px 0;
@@ -64,8 +39,9 @@
 
 .movie-track {
   display: flex;
-  animation: scroll 20s linear infinite;
   gap: 20px;
+  width: max-content;
+  animation: scroll 25s linear infinite;
 }
 
 .movie-track:hover {
@@ -73,24 +49,19 @@
 }
 
 .hot-movies .movie-track {
-  animation-duration: 25s;
+  animation-duration: 50s;
 }
 
 .upcoming-movies .movie-track {
-  animation-duration: 30s;
+  animation-duration: 60s;
   animation-direction: reverse;
 }
 
 @keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-/* Movie Cards */
 .movie-card {
   flex: 0 0 300px;
   height: 400px;
@@ -111,10 +82,11 @@
 
 .movie-poster {
   width: 100%;
-  height: 70%;
+  height: 75%; /* tăng từ 70% → 75% */
   background: linear-gradient(45deg, #ff6b35, #f7931e, #ffcc02, #c5d86d);
   position: relative;
   overflow: hidden;
+  border-radius: 15px 15px 0 0;
 }
 
 .movie-poster::before {
@@ -127,9 +99,16 @@
   opacity: 0.3;
 }
 
+.movie-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
 .movie-info {
   padding: 15px;
-  height: 30%;
+  height: 25%; /* giảm từ 30% → 25% */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -155,7 +134,6 @@
   color: #ffcc02;
 }
 
-/* Hot Movies Specific Styling */
 .hot-movies .movie-card {
   background: linear-gradient(145deg, #3a1a2e, #2a1a3e);
 }
@@ -177,7 +155,6 @@
   font-weight: bold;
 }
 
-/* Upcoming Movies Specific Styling */
 .upcoming-movies .movie-card {
   background: linear-gradient(145deg, #1a3a2e, #1a2a3e);
 }
@@ -199,7 +176,6 @@
   font-weight: bold;
 }
 
-/* Booking Section */
 .booking-nav {
   text-align: center;
   margin: 60px 0;
@@ -238,11 +214,6 @@
     height: 350px;
   }
 
-  .intro p {
-    font-size: 1em;
-    padding: 0 10px;
-  }
-
   .section-header h2 {
     font-size: 1.8em;
   }
@@ -259,29 +230,13 @@
   animation: fadeInUp 0.6s ease forwards;
 }
 
-.movie-card:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.movie-card:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.movie-card:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.movie-card:nth-child(4) {
-  animation-delay: 0.4s;
-}
-.movie-card:nth-child(5) {
-  animation-delay: 0.5s;
-}
+.movie-card:nth-child(1) { animation-delay: 0.1s; }
+.movie-card:nth-child(2) { animation-delay: 0.2s; }
+.movie-card:nth-child(3) { animation-delay: 0.3s; }
+.movie-card:nth-child(4) { animation-delay: 0.4s; }
+.movie-card:nth-child(5) { animation-delay: 0.5s; }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

@@ -2,6 +2,7 @@ import api from "./api";
 
 export async function getAllMoviesRequest() {
   const res = await api.get("/api/movies");
+  console.log(res.data)
   return res.data;
 }
 
