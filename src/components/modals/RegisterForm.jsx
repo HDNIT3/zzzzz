@@ -4,7 +4,7 @@ import "../../styles/register-form.css";
 import { useAuth } from "../../hooks/useAuth";
 
 export function RegisterForm({ onClose, onSwitchToLogin }) {
-  const { register, sendOtp, verifyOtp } = useAuth();
+  const { sendOtp, verifyOtp } = useAuth();
 
   const [formData, setFormData] = useState({
     username: "",
@@ -13,6 +13,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
     confirmPassword: "",
     fullName: "",
     phoneNumber: "",
+    dateOfBirth: "",
     role: "CUSTOMER",
     businessCode: "",
   });
@@ -22,7 +23,8 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isCustomer, setIsCustomer] = useState(true)
+  const [isCustomer, setIsCustomer] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +35,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
 
     if (name === "role") {
       setIsCustomer(value === "CUSTOMER");
-    } 
+    }
   };
 
   const validateForm = () => {
@@ -69,6 +71,10 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
         newErrors.fullName = "Full name is required";
       }
 
+      if (!formData.dateOfBirth) {
+        newErrors.dateOfBirth = "Date of birth is required";
+      }
+
       if (!formData.phoneNumber.trim()) {
         newErrors.phoneNumber = "Phone number is required";
       } else if (!/^[0-9]{10,11}$/.test(formData.phoneNumber.replace(/\s+/g, ""))) {
@@ -78,9 +84,16 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
       if (!formData.role) {
         newErrors.role = "Role is required";
       }
+
+      // Validate business code cho employee
+      if (!isCustomer && !formData.businessCode.trim()) {
+        newErrors.businessCode = "Business code is required for employees";
+      }
     } else {
       if (!otp.trim()) {
         newErrors.otp = "OTP is required";
+      } else if (!/^[0-9]{6}$/.test(otp)) {
+        newErrors.otp = "OTP must be 6 digits";
       }
     }
 
@@ -88,34 +101,87 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * BƯỚC 1: Gửi OTP
+   */
   const handleSendOtp = async () => {
     if (!validateForm()) return;
+
     setIsLoading(true);
+    setErrors({});
+
     try {
-      await sendOtp(formData.email);
+      // Chuẩn bị data để gửi
+      const dataToSend = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: formData.dateOfBirth,
+        role: formData.role,
+      };
+
+      // Thêm businessCode nếu không phải customer
+      if (!isCustomer) {
+        dataToSend.businessCode = formData.businessCode;
+      }
+
+      await sendOtp(dataToSend);
+      
       setIsOtpSent(true);
-      setErrors({});
-      return true;
+      setSuccessMessage(`OTP has been sent to ${formData.email}`);
+      
+      // Xóa success message sau 5 giây
+      setTimeout(() => setSuccessMessage(""), 5000);
     } catch (error) {
-      setErrors({ general: error.message || "Failed to send OTP" });
-      return false;
+      console.error("Send OTP error:", error);
+      
+      // Xử lý lỗi validation từ backend
+      try {
+        const backendErrors = JSON.parse(error.message);
+        setErrors(backendErrors);
+      } catch {
+        setErrors({
+          general: error.response?.data?.message || "Failed to send OTP. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * BƯỚC 2: Verify OTP và đăng ký
+   */
   const handleVerifyOtpAndRegister = async () => {
     if (!validateForm()) return;
+
     setIsLoading(true);
+    setErrors({});
+
     try {
-      await verifyOtp(formData.email, otp);
-      const { confirmPassword, ...userData } = formData;
-      await register(userData);
-      onClose();
-      return true;
+      const result = await verifyOtp(formData.email, otp);
+      
+      // Hiển thị thông báo thành công
+      setSuccessMessage(result.message || "Registration successful!");
+      
+      // Chuyển về login sau 2 giây
+      setTimeout(() => {
+        onSwitchToLogin();
+      }, 2000);
     } catch (error) {
-      setErrors({ otp: error.message || "Invalid or expired OTP" });
-      return false;
+      console.error("Verify OTP error:", error);
+      
+      // Xử lý lỗi validation từ backend
+      try {
+        const backendErrors = JSON.parse(error.message);
+        setErrors(backendErrors);
+      } catch {
+        setErrors({
+          otp: error.response?.data?.errors?.otp || "Invalid or expired OTP",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -123,24 +189,16 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("Form Data:", formData);
     
-    if (!isOtpSent) {
-      await handleSendOtp();
-    } else {
+    if (isOtpSent) {
       await handleVerifyOtpAndRegister();
-    }
-  };
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+    } else {
+      await handleSendOtp();
     }
   };
 
   return (
-    <div className="register-overlay" onClick={handleOverlayClick}>
+    <div className="register-overlay">
       <div className="register-modal register">
         <button className="close-btn" onClick={onClose}>
           <X size={20} />
@@ -156,6 +214,12 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
         </div>
 
         <div className="register-form">
+          {/* Success Message */}
+          {successMessage && (
+            <div className="success-banner">{successMessage}</div>
+          )}
+
+          {/* General Error */}
           {errors.general && <div className="error-banner">{errors.general}</div>}
 
           {!isOtpSent ? (
@@ -262,7 +326,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                 </div>
                 {errors.fullName && <div className="form-error">{errors.fullName}</div>}
               </div>
-              
+
               {/* Date of Birth */}
               <div className="form-group">
                 <label className="form-label">Date of Birth *</label>
@@ -274,7 +338,7 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                     value={formData.dateOfBirth}
                     onChange={handleChange}
                     className="register-input"
-                    placeholder="Enter your date of birth"
+                    max={new Date().toISOString().split("T")[0]}
                   />
                 </div>
                 {errors.dateOfBirth && <div className="form-error">{errors.dateOfBirth}</div>}
@@ -317,35 +381,61 @@ export function RegisterForm({ onClose, onSwitchToLogin }) {
                 </div>
               </div>
 
+              {/* Business Code (chỉ hiện khi không phải CUSTOMER) */}
               {!isCustomer && (
                 <div className="form-group">
-                  <label className="form-label">Business Code</label>
+                  <label className="form-label">Business Code *</label>
                   <div className="input-wrapper">
-                    <input 
-                    type="text" 
-                    name="businessCode"
-                    value={formData.businessCode}
-                    onChange={handleChange}
-                    className="register-input"
-                    placeholder="Enter code to identify your role"
-                    />                    
+                    <Lock className="input-icon" />
+                    <input
+                      type="text"
+                      name="businessCode"
+                      value={formData.businessCode}
+                      onChange={handleChange}
+                      className="register-input"
+                      placeholder="Enter code to identify your role"
+                    />
                   </div>
+                  {errors.businessCode && (
+                    <div className="form-error">{errors.businessCode}</div>
+                  )}
                 </div>
               )}
             </>
           ) : (
+            // OTP Input
             <div className="form-group">
               <label className="form-label">OTP *</label>
               <div className="input-wrapper">
+                <Mail className="input-icon" />
                 <input
                   type="text"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (errors.otp) {
+                      setErrors((prev) => ({ ...prev, otp: "" }));
+                    }
+                  }}
                   className="register-input"
-                  placeholder="Enter the OTP"
+                  placeholder="Enter 6-digit OTP"
+                  maxLength={6}
                 />
               </div>
               {errors.otp && <div className="form-error">{errors.otp}</div>}
+              
+              <button
+                type="button"
+                className="resend-otp-btn"
+                onClick={() => {
+                  setIsOtpSent(false);
+                  setOtp("");
+                  setErrors({});
+                }}
+                disabled={isLoading}
+              >
+                Resend OTP
+              </button>
             </div>
           )}
 

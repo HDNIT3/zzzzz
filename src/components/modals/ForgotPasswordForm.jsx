@@ -60,19 +60,13 @@ export function ForgotPasswordForm({ onClose, onSwitchToLogin }) {
     }
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   const handleBackToLogin = () => {
     setIsSuccess(false);
     onSwitchToLogin();
   };
 
   return (
-    <div className="forgot-password-overlay" onClick={handleOverlayClick}>
+    <div className="forgot-password-overlay">
       <div className="forgot-password-modal register">
         <button className="close-btn" onClick={onClose}>
           <X size={20} />

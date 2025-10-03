@@ -1,6 +1,6 @@
 ﻿import { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-import { loginRequest, registerRequest, sendOtpRequest, verifyOtpRequest } from "../services/AuthService";
+import { loginRequest, sendOtpRequest, verifyOtpRequest } from "../services/AuthService";
 
 export const AuthContext = createContext(null);
 
@@ -23,16 +23,6 @@ export function AuthProvider({ children }) {
       setUser(null);
     }
   }, [token]);
-
-  const register = async (userData) => {
-    try {
-      const res = await registerRequest(userData);
-      return res;
-    } catch (err) {
-      console.error("Registration failed:", err.message);
-      throw err;
-    }
-  };
 
   const login = async (username, password, rememberMe = true) => {
     try {
@@ -63,12 +53,17 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem("username");
   };
 
-  const sendOtp = async (email) => {
+
+  const sendOtp = async (userData) => {
     try {
-      const res = await sendOtpRequest(email);
+      const res = await sendOtpRequest(userData);
+      console.log("OTP sent:", res);
       return res;
     } catch (err) {
-      console.error("Send OTP failed:", err.message);
+      console.error("Send OTP failed:", err);
+      if (err.response?.data?.errors) {
+        throw new Error(JSON.stringify(err.response.data.errors));
+      }
       throw err;
     }
   };
@@ -76,9 +71,13 @@ export function AuthProvider({ children }) {
   const verifyOtp = async (email, otp) => {
     try {
       const res = await verifyOtpRequest(email, otp);
+      console.log("OTP verified and registered:", res);
       return res;
     } catch (err) {
-      console.error("Verify OTP failed:", err.message);
+      console.error("Verify OTP failed:", err);
+      if (err.response?.data?.errors) {
+        throw new Error(JSON.stringify(err.response.data.errors));
+      }
       throw err;
     }
   };
@@ -91,7 +90,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, register, sendOtp, verifyOtp }}
+      value={{ user, login, logout, sendOtp, verifyOtp }}
     >
       {children}
     </AuthContext.Provider>

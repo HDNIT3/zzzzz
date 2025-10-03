@@ -68,13 +68,6 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
     }
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  // 👉 Khi bấm "Forgot password?" thì showForgotPassword = true
   if (showForgotPassword) {
     return (
       <ForgotPasswordForm
@@ -85,7 +78,7 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
   }
 
   return (
-    <div className="login-overlay" onClick={handleOverlayClick}>
+    <div className="login-overlay">
       <div className="login-modal">
         <button className="close-btn" onClick={onClose}>
           <X size={20} />
