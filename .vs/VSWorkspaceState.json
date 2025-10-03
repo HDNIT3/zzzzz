@@ -3,13 +3,14 @@
     "",
     "\\src",
     "\\src\\assets",
-    "\\src\\components",
-    "\\src\\components\\modals",
+    "\\src\\assets\\images",
+    "\\src\\assets\\images\\posters",
     "\\src\\context",
     "\\src\\hooks",
     "\\src\\pages",
-    "\\src\\services"
+    "\\src\\services",
+    "\\src\\styles"
   ],
-  "SelectedNode": "\\src\\components\\modals\\RegisterForm.jsx",
+  "SelectedNode": "\\src\\styles\\booking.css",
   "PreviewInSolutionExplorer": false
 }
