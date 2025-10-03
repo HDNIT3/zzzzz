@@ -4,13 +4,14 @@
     "\\src",
     "\\src\\assets",
     "\\src\\assets\\images",
-    "\\src\\assets\\images\\posters",
+    "\\src\\components",
+    "\\src\\components\\modals",
     "\\src\\context",
     "\\src\\hooks",
     "\\src\\pages",
     "\\src\\services",
     "\\src\\styles"
   ],
-  "SelectedNode": "\\src\\styles\\booking.css",
+  "SelectedNode": "\\src\\services\\MovieService.js",
   "PreviewInSolutionExplorer": false
 }

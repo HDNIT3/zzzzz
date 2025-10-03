@@ -1,0 +1,52 @@
+﻿.seat-map {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    gap: 8px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.seat {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    /* Trạng thái ghế theo SeatStatus enum */
+    .seat.available {
+        background: #22c55e; /* xanh lá */
+        color: white;
+    }
+
+    .seat.selected {
+        background: #f97316; /* cam */
+        color: white;
+    }
+
+    .seat.occupied {
+        background: #6b7280; /* xám */
+        color: white;
+        cursor: not-allowed;
+    }
+
+    .seat.maintenance {
+        background: #ef4444; /* đỏ */
+        color: white;
+        cursor: not-allowed;
+    }
+
+    .seat:hover {
+        transform: scale(1.05);
+    }
+
+.error-message {
+    color: red;
+    text-align: center;
+}

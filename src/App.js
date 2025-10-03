@@ -3,7 +3,8 @@ import Home from "./pages/Home";
 import { MovieBooking } from "./pages/Movie-Booking";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { Booking } from "./pages/Booking"; // 1. Import component mới
+import { Booking } from "./pages/Booking";
+import { SelectShowtime } from "./pages/SelectShowtime"; // ✅ import mới
 
 function App() {
     return (
@@ -12,9 +13,10 @@ function App() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/mov-bk" element={<MovieBooking />} />
-                {/* 2. Thêm Route mới cho trang đặt vé */}
-                {/* ":movieId" là một tham số động để biết đang đặt vé cho phim nào */}
-                <Route path="/booking/:movieId" element={<Booking />} />
+                {/* Bước 1: chọn suất chiếu */}
+                <Route path="/booking/:movieId" element={<SelectShowtime />} />
+                {/* Bước 2: chọn ghế và thanh toán */}
+                <Route path="/booking/:movieId/:showtimeId" element={<Booking />} />
             </Routes>
             <Footer />
         </Router>
