@@ -1,52 +1,127 @@
-﻿.seat-map {
+﻿.seat-layout {
+    margin: 10px auto 0;
+    max-width: 900px;
+    color: #fff;
+}
+
+.screen {
+    background: #e5e7eb;
+    color: #111827;
+    padding: 10px;
+    margin: 10px 0 18px;
+    width: calc(100% - 40px);
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    margin-left: 40px;
+}
+
+.loading-text,
+.error-message {
+    text-align: center;
+}
+
+.error-message {
+    color: #ef4444;
+}
+
+.seat-grid {
     display: grid;
-    grid-template-columns: repeat(10, 40px);
     gap: 8px;
     justify-content: center;
-    margin: 20px 0;
+    align-items: center;
+    margin: 0 auto 10px;
+}
+
+.row-label,
+.col-label {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    user-select: none;
 }
 
 .seat {
     width: 40px;
     height: 40px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    outline: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.18s ease;
 }
 
-    /* Trạng thái ghế theo SeatStatus enum */
+    /* Status */
     .seat.available {
-        background: #22c55e; /* xanh lá */
-        color: white;
+        background: #22c55e;
     }
 
     .seat.selected {
-        background: #f97316; /* cam */
-        color: white;
+        background: #f97316;
     }
 
     .seat.occupied {
-        background: #6b7280; /* xám */
-        color: white;
+        background: #6b7280;
         cursor: not-allowed;
     }
 
     .seat.maintenance {
-        background: #ef4444; /* đỏ */
-        color: white;
+        background: #ef4444;
         cursor: not-allowed;
     }
 
-    .seat:hover {
-        transform: scale(1.05);
+    .seat.empty {
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border: 1px dashed rgba(255,255,255,0.12);
+        pointer-events: none;
     }
 
-.error-message {
-    color: red;
-    text-align: center;
+    .seat:not(.occupied):not(.maintenance):hover {
+        transform: scale(1.06);
+    }
+
+    /* Loại ghế */
+    .seat.regular {
+        border: 2px solid #22c55e;
+    }
+
+    .seat.vip {
+        border: 2px solid gold;
+    }
+
+    .seat.pair {
+        border: 2px solid #3b82f6;
+    }
+
+/* Legend */
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin: 16px 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .legend-item .seat {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+/* Entrances */
+.entrances {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
 }
