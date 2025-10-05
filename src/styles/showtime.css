@@ -1,35 +1,235 @@
 .select-showtime-page {
-    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.select-showtime-movie-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin-bottom: 30px;
+    text-align: center;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.select-showtime-movie-header h2 {
+    color: #f1f5f9;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.select-showtime-movie-duration {
+    color: #94a3b8;
+    font-size: 16px;
+    margin: 0;
+}
+
+.select-showtime-date-filter {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    margin-bottom: 30px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.select-showtime-date-filter h3 {
+    color: #f1f5f9;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
     text-align: center;
 }
 
-.showtime-list {
-    margin-top: 20px;
+.select-showtime-date-buttons {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 12px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
-.showtime-btn {
-    padding: 10px 15px;
-    border: none;
-    background: #007bff;
-    color: white;
-    border-radius: 6px;
+.select-showtime-date-btn {
+    padding: 12px 20px;
+    border: 2px solid #334155;
+    background: #1e293b;
+    color: #cbd5e1;
+    border-radius: 12px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 120px;
 }
 
-    .showtime-btn:hover {
-        background: #0056b3;
+.select-showtime-date-btn:hover {
+    border-color: #3b82f6;
+    color: #60a5fa;
+    background: #1e3a5f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.select-showtime-date-btn.active {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+}
+
+.select-showtime-section {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.select-showtime-section h3 {
+    color: #f1f5f9;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.select-showtime-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.select-showtime-btn {
+    padding: 20px;
+    border: 2px solid #334155;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.select-showtime-btn:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.select-showtime-btn:hover .select-showtime-time {
+    color: #60a5fa;
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+}
+
+.select-showtime-btn:hover .select-showtime-language,
+.select-showtime-btn:hover .select-showtime-room {
+    color: #cbd5e1;
+}
+
+.select-showtime-time {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3b82f6;
+    transition: all 0.3s ease;
+}
+
+.select-showtime-language {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    background: rgba(51, 65, 85, 0.6);
+    padding: 4px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.select-showtime-btn:hover .select-showtime-language {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.select-showtime-room {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.select-showtime-no-showtime {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 16px;
+    padding: 40px;
+    grid-column: 1 / -1;
+}
+
+.select-showtime-status {
+    text-align: center;
+    margin: 40px 20px;
+    padding: 30px;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    font-size: 18px;
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.select-showtime-status.error {
+    color: #fca5a5;
+    background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
+    border: 2px solid #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .select-showtime-page {
+        padding: 20px 15px;
     }
 
-.status {
-    text-align: center;
-    margin: 20px;
+    .select-showtime-movie-header h2 {
+        font-size: 24px;
+    }
+
+    .select-showtime-date-buttons {
+        gap: 8px;
+    }
+
+    .select-showtime-date-btn {
+        min-width: 100px;
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+
+    .select-showtime-list {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .select-showtime-btn {
+        padding: 15px;
+    }
+
+    .select-showtime-time {
+        font-size: 20px;
+    }
 }
 
-.status.error {
-    color: red;
+@media (max-width: 480px) {
+    .select-showtime-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

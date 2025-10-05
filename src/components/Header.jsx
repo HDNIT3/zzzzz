@@ -110,7 +110,7 @@ export default function Header() {
             {user ? (
               <div className="user-info">
                 <span className="user-welcome">
-                  Welcome, {user.sub}
+                  Welcome, {user.username}
                 </span>
                 <button onClick={logout} className="logout-btn">
                   Logout

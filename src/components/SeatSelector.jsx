@@ -1,19 +1,18 @@
 ﻿import React, { useState, useEffect } from "react";
 import "../styles/seat-selector.css";
-import { getSeatsByShowtime } from "../services/MovieService";
+import { getSeatsByShowtime } from "../services/BookingService";
 
 const SeatSelector = ({ showtimeId, onSelectSeats }) => {
     const [seats, setSeats] = useState([]);
     const [error, setError] = useState(null);
 
-    // Chuẩn hóa seat từ BE -> FE (position kiểu "A10")
     const normalizeSeat = (s) => ({
         id: s.seatId,
         row: s.position?.substring(0, 1) || "A",
         col: Number(s.position?.substring(1)) || 0,
-        status: (s.status || "AVAILABLE").toLowerCase(), // available | occupied | maintenance
+        status: (s.status || "AVAILABLE").toLowerCase(), 
         price: s.price || 0,
-        type: (s.type || "REGULAR").toLowerCase(), // regular | vip | pair
+        type: (s.type || "REGULAR").toLowerCase(), 
     });
 
     useEffect(() => {
@@ -41,7 +40,6 @@ const SeatSelector = ({ showtimeId, onSelectSeats }) => {
         })();
     }, [showtimeId]);
 
-    // Toggle chọn ghế (chỉ FE)
     const handleSelect = (seatId) => {
         setSeats((prev) =>
             prev.map((s) =>
@@ -60,17 +58,15 @@ const SeatSelector = ({ showtimeId, onSelectSeats }) => {
         );
     };
 
-    // Thông báo ghế đang selected cho parent
     useEffect(() => {
         onSelectSeats(seats.filter((s) => s.status === "selected"));
     }, [seats, onSelectSeats]);
 
-    // Gom theo hàng + tính số cột lớn nhất
     const grouped = seats.reduce((acc, s) => {
         (acc[s.row] ||= []).push(s);
         return acc;
     }, {});
-    const rows = Object.keys(grouped).sort(); // A..J
+    const rows = Object.keys(grouped).sort(); 
     const maxCols = Math.max(0, ...seats.map((s) => s.col));
 
     return (

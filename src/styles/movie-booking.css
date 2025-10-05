@@ -61,32 +61,82 @@
   color: #ffcc02;
 }
 
-/* Filters */
+/* Filters Section */
 .movie-booking-filters-section {
   padding: 2rem;
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Search Box */
+.movie-booking-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.movie-booking-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f1f5f9;
+  font-size: 1rem;
+  pointer-events: none;
 }
 
 .movie-booking-search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  padding: 0.75rem 1rem 0.75rem 2.5rem; /* padding-left đủ chứa icon */
   border: none;
   border-radius: 25px;
   background: rgba(255, 255, 255, 0.05);
   color: #f1f5f9;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+/* Filter selects */
+.movie-booking-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 120px;
 }
 
 .movie-booking-filter-select {
   padding: 0.5rem 1rem;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 41, 59, 0.8);
   color: #f1f5f9;
+  font-size: 0.95rem;
+  font-weight: 500;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* Movie Cards Grid */
+.movie-booking-filter-select:hover {
+  background: rgba(30, 41, 59, 1);
+  border-color: #ff6b35;
+}
+
+.movie-booking-filter-select:focus {
+  outline: none;
+  border-color: #ffcc02;
+  box-shadow: 0 0 0 3px rgba(255, 204, 2, 0.1);
+}
+
+.movie-booking-filter-select option {
+  background: #1e293b;
+  color: #f1f5f9;
+  padding: 0.5rem;
+}
+
+/* Movies Grid */
 .movie-booking-movies-grid {
   padding: 2rem;
   display: grid;
@@ -159,6 +209,25 @@
   margin-top: 0.5rem;
 }
 
+/* Booking Button */
+.movie-booking-button {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.movie-booking-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
+}
+
 /* Tabs */
 .movie-booking-tab-button {
   padding: 0.75rem 2rem;
@@ -192,22 +261,12 @@
     flex-direction: column;
     align-items: stretch;
   }
-}
 
-.movie-booking-button {
-    margin-top: 1rem;
+  .movie-booking-search-box {
     width: 100%;
-    padding: 0.75rem;
-    background: linear-gradient(45deg, #ff6b35, #f7931e);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
+  }
 
-    .movie-booking-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255, 107, 53, 0.4);
-    }
+  .movie-booking-filter-group {
+    width: 100%;
+  }
+}

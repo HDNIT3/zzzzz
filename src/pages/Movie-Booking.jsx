@@ -23,14 +23,14 @@ export function MovieBooking() {
     const [selectedLanguage, setSelectedLanguage] = useState("all");
 
     const { movies, fetchAllMovies, loading, error } = useMovies();
-    const navigate = useNavigate(); // 2. Khởi tạo navigate
+    const navigate = useNavigate(); 
 
     useEffect(() => {
         fetchAllMovies();
     }, []);
 
     const handleBooking = (movieId) => {
-        // 3. Hàm xử lý chuyển trang
+        console.log("Booking movie:", movieId);
         navigate(`/booking/${movieId}`);
     };
 
