@@ -8,11 +8,16 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
+  // Khi token thay đổi, decode token
   useEffect(() => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        setUser(decoded);
+        setUser({
+          username: decoded.sub,
+          role: decoded.role,
+          accountId: decoded.user_id,
+        });
         console.log("Decoded token:", decoded);
       } catch (error) {
         console.error("Invalid Token");
@@ -24,18 +29,26 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  // Login
   const login = async (username, password, rememberMe = true) => {
     try {
       const token = await loginRequest(username, password);
       setToken(token);
+      const decoded = jwtDecode(token);
 
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-
+      // Lưu vào đúng storage
       if (rememberMe) {
         localStorage.setItem("token", token);
+        localStorage.setItem("username", decoded.sub);
+        localStorage.setItem("role", decoded.role);
+        localStorage.setItem("accountId", decoded.user_id);
+        sessionStorage.clear();
       } else {
         sessionStorage.setItem("token", token);
+        sessionStorage.setItem("username", decoded.sub);
+        sessionStorage.setItem("role", decoded.role);
+        sessionStorage.setItem("accountId", decoded.user_id);
+        localStorage.clear();
       }
 
       return token;
@@ -45,15 +58,15 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Logout
   const logout = () => {
     setToken(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("username");
+    setUser(null);
+    localStorage.clear();
+    sessionStorage.clear();
   };
 
-
+  // Send OTP
   const sendOtp = async (userData) => {
     try {
       const res = await sendOtpRequest(userData);
@@ -68,6 +81,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Verify OTP
   const verifyOtp = async (email, otp) => {
     try {
       const res = await verifyOtpRequest(email, otp);
@@ -82,6 +96,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Load token từ storage khi mount
   useEffect(() => {
     const savedToken =
       localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -89,9 +104,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, sendOtp, verifyOtp }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, sendOtp, verifyOtp }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,8 +1,8 @@
-// LoginForm.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, Lock, Eye, EyeOff, X } from "lucide-react";
 import "../../styles/login-form.css";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
+import { jwtDecode } from "jwt-decode";
 
 export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
   const { login } = useAuth();
@@ -13,10 +13,19 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const savedUsername = localStorage.getItem("username") || sessionStorage.getItem("username");
+
+    if (savedToken && savedUsername) {
+      setFormData({ username: savedUsername, password: "" });
+      setIsRememberMe(!!localStorage.getItem("token"));
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -24,42 +33,28 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    if (!formData.username.trim()) newErrors.username = "Username is required";
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRememberMeChange = (e) => {
-    setIsRememberMe(e.target.checked);
-  };
+  const handleRememberMeChange = (e) => setIsRememberMe(e.target.checked);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsLoading(true);
     try {
-      const token = await login(formData.username, formData.password);
+      const token = await login(formData.username, formData.password, isRememberMe);
+      const decoded = jwtDecode(token);
 
-      if (isRememberMe) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("username", formData.username);
-      } else {
-        sessionStorage.setItem("token", token);
-        sessionStorage.setItem("username", formData.username);
-      }
-
+      // Cập nhật storage (đã handled trong login)
+      setFormData({ username: decoded.sub, password: "" });
       onClose();
     } catch (error) {
       setErrors({ general: "Invalid username or password" });
@@ -68,14 +63,13 @@ export function LoginForm({ onClose, onSwitchToRegister, useAuth }) {
     }
   };
 
-  if (showForgotPassword) {
+  if (showForgotPassword)
     return (
       <ForgotPasswordForm
         onClose={onClose}
         onSwitchToLogin={() => setShowForgotPassword(false)}
       />
     );
-  }
 
   return (
     <div className="login-overlay">

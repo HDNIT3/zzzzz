@@ -31,7 +31,6 @@
     overflow: hidden;
 }
 
-/* === CỘT THÔNG TIN PHIM === */
 .movie-summary {
     width: 320px;
     background-color: #0f172a;
@@ -45,7 +44,7 @@
     border-radius: 8px;
     margin-bottom: 1rem;
     object-fit: cover;
-    height: auto; /* Đảm bảo hình ảnh không bị méo */
+    height: auto; 
 }
 
 .summary-title {

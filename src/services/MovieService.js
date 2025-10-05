@@ -2,7 +2,6 @@
 
 export async function getAllMoviesRequest() {
     const res = await api.get("/api/movies");
-    console.log(res.data);
     return res.data;
 }
 
@@ -55,10 +54,9 @@ export async function getSeatsByShowtime(showtimeId) {
     }
 }
 
-// ✅ sửa: dùng seatIds cho đúng với backend
 export async function updateSeatSelection(seatIds, action) {
     const res = await api.post("/api/seats/select", { seatIds, action });
-    return res.data.seats; // backend trả về { seats: [...] }
+    return res.data.seats; 
 }
 
 export async function createBooking(showtimeId, customerId, seatIds) {

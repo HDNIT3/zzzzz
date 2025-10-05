@@ -1,5 +1,4 @@
-﻿// src/pages/Booking.jsx
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieByIdRequest, createBooking } from "../services/MovieService";
 import "../styles/booking.css";
@@ -12,7 +11,7 @@ import SeatSelector from "../components/SeatSelector";
 const postersImport = require.context(
     "../assets/images/posters",
     false,
-    /\.(png|jpe?g|svg)$/ // chỉ load ảnh
+    /\.(png|jpe?g|svg)$/ 
 );
 
 const posters = {};
@@ -24,7 +23,7 @@ postersImport.keys().forEach((key) => {
 const TABS = ["Seats", "Services", "Payment"];
 
 export function Booking() {
-    const { movieId, showtimeId } = useParams(); // ✅ lấy cả movieId và showtimeId
+    const { movieId, showtimeId } = useParams(); 
     const navigate = useNavigate();
 
     const [movie, setMovie] = useState(null);
@@ -32,9 +31,8 @@ export function Booking() {
     const [error, setError] = useState(null);
     const [activeTabIndex, setActiveTabIndex] = useState(0);
     const [selectedSeats, setSelectedSeats] = useState([]);
-    const seatPrice = 75000; // có thể lấy từ backend
+    const seatPrice = 75000; 
 
-    // load thông tin phim
     useEffect(() => {
         const fetchMovie = async () => {
             try {
@@ -52,7 +50,6 @@ export function Booking() {
         fetchMovie();
     }, [movieId]);
 
-    // điều hướng tab
     const handleNextTab = () => {
         if (activeTabIndex === 0 && selectedSeats.length === 0) {
             alert("Vui lòng chọn ít nhất một ghế!");
