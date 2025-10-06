@@ -1,23 +1,23 @@
-﻿import React, { useContext, useMemo, useState, useEffect } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { getSelectedServices } from "../SelectedServiceStore";
+﻿import React, { useMemo, useState, useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { getSelectedServices } from "../utils/SelectedServiceStore";
+import { createPaymentRequest } from "../services/PaymentService";
+import "../styles/booking-summary.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function BookingSummary({ showtimeId, selectedSeats }) {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const accountId = user?.accountId || null;
     const selectedServices = getSelectedServices() || [];
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
-    // Tính tổng giá ghế
     const totalSeatPrice = useMemo(
         () => selectedSeats.reduce((sum, s) => sum + (s.price || 0), 0),
         [selectedSeats]
     );
 
-    // Tính tổng giá dịch vụ
     const totalServicePrice = useMemo(
         () => selectedServices.reduce((sum, s) => sum + (s.price * s.quantity || 0), 0),
         [selectedServices]
@@ -30,7 +30,6 @@ export default function BookingSummary({ showtimeId, selectedSeats }) {
         setMessage("");
 
         try {
-            // Chuẩn bị dữ liệu bill tạm
             const billBody = {
                 accountId,
                 showtimeId,
@@ -42,23 +41,10 @@ export default function BookingSummary({ showtimeId, selectedSeats }) {
                 seatIds: selectedSeats.map((s) => s.id),
             };
 
-            // Gửi yêu cầu tạo thanh toán VNPay
-            const params = new URLSearchParams({
-                amount: Math.round(totalAmount), // VNPay yêu cầu số nguyên
-                orderInfo: `Booking-${accountId}`,
-            });
-
-            const res = await fetch(`http://localhost:8080/api/payment/createPay?${params}`, {
-                method: "POST",
-            });
-
-            const data = await res.json();
+            const data = await createPaymentRequest(totalAmount, `Booking-${accountId}`);
 
             if (data.success && data.paymentUrl) {
-                // Lưu bill tạm để callback sử dụng
                 localStorage.setItem("pendingBill", JSON.stringify(billBody));
-
-                // Chuyển người dùng đến trang VNPay
                 window.location.href = data.paymentUrl;
             } else {
                 setMessage("❌ Lỗi khi tạo yêu cầu thanh toán VNPay.");
@@ -71,88 +57,80 @@ export default function BookingSummary({ showtimeId, selectedSeats }) {
         }
     };
 
-    // Xử lý khi người dùng hủy thanh toán
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        const paymentStatus = urlParams.get("vnp_ResponseCode"); // VNPay trả về query param
+        const paymentStatus = urlParams.get("vnp_ResponseCode");
 
-        if (paymentStatus === "24") { // 24 = hủy thanh toán
+        if (paymentStatus === "24") {
             const pendingBill = localStorage.getItem("pendingBill");
-            if (pendingBill) {
-                localStorage.removeItem("pendingBill"); // Xóa bill tạm
-            }
-            // Quay về trang trước
+            if (pendingBill) localStorage.removeItem("pendingBill");
             window.history.back();
         }
     }, []);
 
     return (
-        <div className="container my-4">
-            <div className="card shadow">
+        <div className="booking-summary-container">
+            <div className="card shadow booking-summary-card">
                 <div className="card-body">
                     <h2 className="text-center mb-4">🎟️ Booking Summary</h2>
 
                     {/* Ghế đã chọn */}
-                    <div className="mb-4">
-                        <h5 className="border-bottom pb-2">💺 Selected Seats</h5>
+                    <section className="booking-section">
+                        <h5 className="section-title">💺 Selected Seats</h5>
                         {selectedSeats.length === 0 ? (
                             <p className="text-muted">Chưa chọn ghế nào.</p>
                         ) : (
-                            <div className="table-responsive">
-                                <table className="table table-striped table-bordered align-middle">
-                                    <thead className="table-light text-center">
-                                        <tr>
-                                            <th>Mã ghế</th>
-                                            <th>Loại</th>
-                                            <th>Giá ₫</th>
+                            <table className="table table-striped table-bordered text-center">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Mã ghế</th>
+                                        <th>Loại</th>
+                                        <th>Giá ₫</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedSeats.map((s) => (
+                                        <tr key={s.id}>
+                                            <td>{s.row}{s.col}</td>
+                                            <td>{s.type}</td>
+                                            <td className="text-end">{s.price.toLocaleString()}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedSeats.map((s) => (
-                                            <tr key={s.id}>
-                                                <td className="text-center">{s.row}{s.col}</td>
-                                                <td className="text-center">{s.type}</td>
-                                                <td className="text-end">{s.price.toLocaleString()}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
                         <p className="fw-bold text-end">Tổng ghế: {totalSeatPrice.toLocaleString()} $</p>
-                    </div>
+                    </section>
 
                     {/* Dịch vụ đã chọn */}
-                    <div className="mb-4">
-                        <h5 className="border-bottom pb-2">🍿 Selected Services</h5>
+                    <section className="booking-section">
+                        <h5 className="section-title">🍿 Selected Services</h5>
                         {selectedServices.length === 0 ? (
                             <p className="text-muted">Chưa chọn dịch vụ nào.</p>
                         ) : (
-                            <div className="table-responsive">
-                                <table className="table table-striped table-bordered align-middle">
-                                    <thead className="table-light text-center">
-                                        <tr>
-                                            <th>Tên dịch vụ</th>
-                                            <th>Số lượng</th>
-                                            <th>Giá</th>
-                                            <th>Tổng</th>
+                            <table className="table table-striped table-bordered text-center">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Tên dịch vụ</th>
+                                        <th>Số lượng</th>
+                                        <th>Giá</th>
+                                        <th>Tổng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedServices.map((s, i) => (
+                                        <tr key={i}>
+                                            <td>{s.name}</td>
+                                            <td>{s.quantity}</td>
+                                            <td className="text-end">{s.price.toLocaleString()}</td>
+                                            <td className="text-end">{(s.price * s.quantity).toLocaleString()}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedServices.map((s, i) => (
-                                            <tr key={i}>
-                                                <td>{s.name}</td>
-                                                <td className="text-center">{s.quantity}</td>
-                                                <td className="text-end">{s.price.toLocaleString()}</td>
-                                                <td className="text-end">{(s.price * s.quantity).toLocaleString()}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
                         <p className="fw-bold text-end">Tổng dịch vụ: {totalServicePrice.toLocaleString()} $</p>
-                    </div>
+                    </section>
 
                     {/* Tổng cộng */}
                     <div className="border-top pt-3">
@@ -168,11 +146,7 @@ export default function BookingSummary({ showtimeId, selectedSeats }) {
                         >
                             {loading ? "Đang xử lý..." : "💳 Thanh toán VNPay"}
                         </button>
-                        {message && (
-                            <div className="mt-3 alert alert-info text-center">
-                                {message}
-                            </div>
-                        )}
+                        {message && <div className="mt-3 alert alert-info text-center">{message}</div>}
                     </div>
                 </div>
             </div>

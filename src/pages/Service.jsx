@@ -1,8 +1,8 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { getAllServices } from '../services/UserService';
-import { setSelectedServices } from '../SelectedServiceStore';
+import { setSelectedServices } from '../utils/SelectedServiceStore';
 
-const PageService = () => {
+export default function PageService() {
     const [services, setServices] = useState([]);
     const [filteredServices, setFilteredServices] = useState([]);
     const [selectedServices, updateSelectedServices] = useState([]);
@@ -11,7 +11,6 @@ const PageService = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // ✅ Fetch services từ API
     useEffect(() => {
         const fetchServices = async () => {
             try {
@@ -27,7 +26,6 @@ const PageService = () => {
         fetchServices();
     }, []);
 
-    // ✅ Lọc dịch vụ
     useEffect(() => {
         let result = services;
         if (searchName.trim() !== '') {
@@ -259,5 +257,3 @@ const styles = {
         color: '#2c3e50',
     },
 };
-
-export default PageService;
