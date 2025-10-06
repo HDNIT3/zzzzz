@@ -2,6 +2,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieByIdRequest } from "../services/MovieService";
 import { createBooking } from "../services/BookingService";
+import PageService from "../pages/Service";
+import BookingSummary from "./BookingSummary";
 import "../styles/booking.css";
 import {
     ChevronLeft,
@@ -116,24 +118,20 @@ export function Booking() {
         if (currentTab === "Payment") {
             return (
                 <div className="tab-content empty payment-tab-content">
-                    <p>Default payment method:</p>
-                    <strong>Bank Card / MoMo Wallet</strong>
-                    <p className="payment-note">
-                        Online booking only supports prepayment.
-                    </p>
-                    <button
-                        className="payment-button final-payment-button"
-                        onClick={handlePayment}
-                    >
-                        <CreditCard size={20} />
-                        Pay Now
-                    </button>
+                    <div className="tab-content empty">
+                        <BookingSummary
+                            showtimeId={showtimeId}
+                            selectedSeats={selectedSeats}
+                            selectedServices={[]}
+                        />
+                    </div>
+                    
                 </div>
             );
         }
         return (
             <div className="tab-content empty">
-                <p>Feature under development.</p>
+                <PageService />
             </div>
         );
     };
