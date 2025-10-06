@@ -212,31 +212,6 @@ export function MovieBooking() {
                     );
                 })}
             </section>
-
-            {/* ... (Phần code Tabs không thay đổi) ... */}
-            <section className="movie-booking-tabs-section">
-                <button
-                    className={`movie-booking-tab-button ${activeTab === "overview" ? "active" : ""
-                        }`}
-                    onClick={() => setActiveTab("overview")}
-                >
-                    Overview
-                </button>
-                <button
-                    className={`movie-booking-tab-button ${activeTab === "cast" ? "active" : ""
-                        }`}
-                    onClick={() => setActiveTab("cast")}
-                >
-                    Cast
-                </button>
-                <button
-                    className={`movie-booking-tab-button ${activeTab === "reviews" ? "active" : ""
-                        }`}
-                    onClick={() => setActiveTab("reviews")}
-                >
-                    Reviews
-                </button>
-            </section>
         </div>
     );
 }

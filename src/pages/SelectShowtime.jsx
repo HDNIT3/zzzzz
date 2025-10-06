@@ -1,149 +1,98 @@
-﻿import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getMovieByIdRequest } from "../services/MovieService";
-import { getShowtimesForNext7DaysRequest, getShowtimesByDateRequest } from "../services/ShowtimeService";
+﻿import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useShowtimes } from "../hooks/useShowtimes";
 import "../styles/showtime.css";
 
+const postersImport = require.context(
+    "../assets/images/posters",
+    false,
+    /\.(png|jpe?g|svg)$/
+);
+
+const posters = {};
+postersImport.keys().forEach((key) => {
+    const fileName = key.replace("./", "");
+    posters[fileName] = postersImport(key);
+});
+
 export function SelectShowtime() {
+    const [activeTab, setActiveTab] = useState("overview");
     const { movieId } = useParams();
     const navigate = useNavigate();
 
-    const [movie, setMovie] = useState(null);
-    const [allShowtimes, setAllShowtimes] = useState([]);
-    const [filteredShowtimes, setFilteredShowtimes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(null);
+    const {
+        movie,
+        filteredShowtimes,
+        selectedDate,
+        loading,
+        error,
+        emptyMessage,
+        handleDateSelect,
+        formatDate,
+    } = useShowtimes(movieId);
 
-    // Tạo danh sách 7 ngày (hôm nay + 6 ngày tiếp theo)
     const getNext7Days = () => {
         const dates = [];
         const today = new Date();
-        
         for (let i = 0; i < 7; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
             dates.push(date);
         }
-        
         return dates;
     };
 
     const next7Days = getNext7Days();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                
-                // Lấy thông tin phim
-                const movieData = await getMovieByIdRequest(movieId);
-                setMovie(movieData);
-                
-                // Lấy tất cả suất chiếu trong 7 ngày tới
-                const showtimesData = await getShowtimesForNext7DaysRequest(movieId);
-                setAllShowtimes(showtimesData);
-                
-                // Mặc định chọn ngày hôm nay
-                const today = formatDate(new Date());
-                setSelectedDate(today);
-                
-                // Lọc suất chiếu cho ngày hôm nay
-                filterShowtimesByDate(showtimesData, today);
-                
-                setError(null);
-            } catch (err) {
-                setError("Không thể tải thông tin. Vui lòng thử lại.");
-                console.error("Fetch error:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [movieId]);
-
-    // Format ngày thành YYYY-MM-DD
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    // Format hiển thị ngày (VD: Thứ 2, 05/10)
     const formatDisplayDate = (date) => {
-        const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const dayName = days[date.getDay()];
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const today = new Date();
-        if (formatDate(date) === formatDate(today)) {
-            return `Hôm nay, ${day}/${month}`;
-        }
-        
+        if (formatDate(date) === formatDate(today)) return `Today, ${day}/${month}`;
         return `${dayName}, ${day}/${month}`;
     };
 
-    // Lọc suất chiếu theo ngày
-    const filterShowtimesByDate = (showtimes, dateStr) => {
-        const filtered = showtimes.filter(st => {
-            if (!st.startTime) return false;
-            
-            const showtimeDate = new Date(st.startTime);
-            const showtimeDateStr = formatDate(showtimeDate);
-            
-            return showtimeDateStr === dateStr;
-        });
-        
-        setFilteredShowtimes(filtered);
-    };
-
-    // Xử lý khi chọn ngày
-    const handleDateSelect = async (date) => {
-        const dateStr = formatDate(date);
-        setSelectedDate(dateStr);
-        
-        // Có thể gọi API mới để lấy suất chiếu theo ngày cụ thể
-        // hoặc lọc từ danh sách đã có
-        try {
-            const showtimesData = await getShowtimesByDateRequest(movieId, dateStr);
-            setFilteredShowtimes(showtimesData);
-        } catch (err) {
-            // Nếu API lỗi, lọc từ danh sách có sẵn
-            filterShowtimesByDate(allShowtimes, dateStr);
-        }
-    };
-
-    // Format thời gian hiển thị (VD: 10:30)
-    const formatTime = (dateTime) => {
-        const date = new Date(dateTime);
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-    };
-
-    if (loading) return <div className="select-showtime-status">Đang tải thông tin...</div>;
+    if (loading) return <div className="select-showtime-status">Loading...</div>;
     if (error) return <div className="select-showtime-status error">{error}</div>;
-    if (!movie) return <div className="select-showtime-status">Không tìm thấy phim.</div>;
+    if (!movie) return <div className="select-showtime-status">Movie not found.</div>;
+
+    // ✅ Xử lý lấy đúng đường dẫn poster
+    let posterSrc = "/fallback.jpg"; // fallback mặc định
+    if (movie.posterUrl) {
+        const fileName = movie.posterUrl.split("/").pop();
+        posterSrc = posters[fileName] || movie.posterUrl || "/fallback.jpg";
+    }
 
     return (
         <div className="select-showtime-page">
+            {/* Movie Header */}
             <div className="select-showtime-movie-header">
-                <h2>Chọn suất chiếu: {movie.title}</h2>
-                <p className="select-showtime-movie-duration">Thời lượng: {movie.duration} phút</p>
+                {/* ✅ Chèn poster */}
+                <img
+                    src={posterSrc}
+                    alt={movie.title}
+                    className="select-showtime-movie-poster"
+                />
+                <div className="select-showtime-movie-info">
+                    <h2>Select Showtime: {movie.title}</h2>
+                    <p>Duration: {movie.duration} minutes</p>
+                </div>
             </div>
 
-            {/* Bộ lọc ngày */}
+            {/* Date Filter */}
             <div className="select-showtime-date-filter">
-                <h3>Chọn ngày:</h3>
+                <h3>Select Date:</h3>
                 <div className="select-showtime-date-buttons">
                     {next7Days.map((date, index) => {
                         const dateStr = formatDate(date);
                         return (
                             <button
                                 key={index}
-                                className={`select-showtime-date-btn ${selectedDate === dateStr ? 'active' : ''}`}
+                                className={`select-showtime-date-btn ${
+                                    selectedDate === dateStr ? "active" : ""
+                                }`}
                                 onClick={() => handleDateSelect(date)}
                             >
                                 {formatDisplayDate(date)}
@@ -153,37 +102,139 @@ export function SelectShowtime() {
                 </div>
             </div>
 
-            {/* Danh sách suất chiếu */}
+            {/* Showtimes Section */}
             <div className="select-showtime-section">
-                <h3>Suất chiếu ngày {selectedDate}:</h3>
+                <h3>Showtimes on {selectedDate}:</h3>
                 <div className="select-showtime-list">
-                    {filteredShowtimes.length > 0 ? (
+                    {loading ? (
+                        <p className="select-showtime-no-showtime">Loading...</p>
+                    ) : error ? (
+                        <p className="select-showtime-no-showtime error">{error}</p>
+                    ) : emptyMessage ? (
+                        <p className="select-showtime-no-showtime">{emptyMessage}</p>
+                    ) : filteredShowtimes.length > 0 ? (
                         filteredShowtimes.map((st) => (
                             <button
                                 key={st.showtimeId}
-                                className="select-showtime-btn"
                                 onClick={() => navigate(`/booking/${movieId}/${st.showtimeId}`)}
+                                className="select-showtime-btn"
                             >
-                                <div className="select-showtime-time">
-                                    {formatTime(st.startTime)}
-                                </div>
+                                <span className="select-showtime-time">
+                                    {new Date(st.startTime).toLocaleTimeString("en-US", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })}
+                                </span>
                                 {st.language && (
-                                    <div className="select-showtime-language">
-                                        {st.language}
-                                    </div>
+                                    <span className="select-showtime-language">{st.language}</span>
                                 )}
                                 {st.room && (
-                                    <div className="select-showtime-room">
-                                        {st.room.name || st.room.roomId}
-                                    </div>
+                                    <span className="select-showtime-room">Room {st.room?.name}</span>
                                 )}
                             </button>
                         ))
                     ) : (
-                        <p className="select-showtime-no-showtime">Không có suất chiếu nào trong ngày này.</p>
+                        <p className="select-showtime-no-showtime">
+                            No showtimes available for this date.
+                        </p>
                     )}
                 </div>
             </div>
+
+            {/* Tabs Section */}
+            <section className="select-showtime-tabs-section">
+                <button
+                    className={`select-showtime-tab-button ${
+                        activeTab === "overview" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("overview")}
+                >
+                    Overview
+                </button>
+                <button
+                    className={`select-showtime-tab-button ${
+                        activeTab === "cast" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("cast")}
+                >
+                    Cast
+                </button>
+                <button
+                    className={`select-showtime-tab-button ${
+                        activeTab === "reviews" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("reviews")}
+                >
+                    Reviews
+                </button>
+            </section>
+
+            {/* Tab Content */}
+            <section className="select-showtime-tab-content">
+                {activeTab === "overview" && (
+                    <div className="select-showtime-tab-overview select-showtime-tab-panel">
+                        <h3>Overview</h3>
+                        <p>{movie.description}</p>
+                        <div className="select-showtime-movie-details">
+                            <p>
+                                <strong>Duration:</strong> {movie.duration} minutes
+                            </p>
+                            <p>
+                                <strong>Rating:</strong> {movie.rating}/10
+                            </p>
+                            <p>
+                                <strong>Age Rating:</strong> {movie.ageRating}
+                            </p>
+                            <p>
+                                <strong>Genres:</strong> {movie.genres?.join(", ")}
+                            </p>
+                            <p>
+                                <strong>Languages:</strong> {movie.languages?.join(", ")}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "cast" && (
+                    <div className="select-showtime-tab-cast select-showtime-tab-panel">
+                        <h3>Cast</h3>
+                        {movie.cast && movie.cast.length > 0 ? (
+                            <ul className="select-showtime-cast-list">
+                                {movie.cast.map((actor, index) => (
+                                    <li key={index}>{actor}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No cast information available.</p>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === "reviews" && (
+                    <div className="select-showtime-tab-reviews select-showtime-tab-panel">
+                        <h3>Reviews</h3>
+                        {movie.reviews && movie.reviews.length > 0 ? (
+                            <div className="select-showtime-reviews-list">
+                                {movie.reviews.map((review) => (
+                                    <div key={review.reviewId} className="select-showtime-review-item">
+                                        <div className="select-showtime-review-header">
+                                            <span className="select-showtime-review-author">
+                                                {review.customer?.fullName || "Anonymous"}
+                                            </span>
+                                            <span className="select-showtime-review-rating">
+                                                ⭐ {review.rating}/10
+                                            </span>
+                                        </div>
+                                        <p className="select-showtime-review-content">{review.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p>No reviews available yet.</p>
+                        )}
+                    </div>
+                )}
+            </section>
         </div>
     );
 }
