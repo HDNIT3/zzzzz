@@ -11,7 +11,6 @@ import { RegisterForm } from "./modals/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
 import "../styles/header.css";
 
-// Menu cơ bản
 const baseMenu = {
   CUSTOMER: [
     { label: "Home", path: "/", icon: Home },
@@ -19,15 +18,15 @@ const baseMenu = {
     { label: "My Profile", path: "/prof", icon: User },
     { label: "My Bookings", path: "/bk-his", icon: BookOpen },
     { label: "Reviews", path: "/rev", icon: Star },
-    { label: "Support", path: "/sup", icon: Hash }
+    { label: "Support", path: "/sup", icon: Hash },
   ],
   STAFF: [
     { label: "Home", path: "/", icon: Home },
-    { label: "POS - Booking", path: "/pos", icon: Clapperboard },
+    { label: "POS - Booking", path: "/mov-bk", icon: Clapperboard },
     { label: "Customer", path: "/cus", icon: Users },
     { label: "Transactions", path: "/trans", icon: Calendar },
     { label: "Schedule", path: "/sched", icon: Calendar },
-    { label: "Support", path: "/sup", icon: Hash }
+    { label: "Support", path: "/sup", icon: Hash },
   ],
   MANAGER: [
     { label: "Home", path: "/", icon: Home },
@@ -39,7 +38,7 @@ const baseMenu = {
     { label: "Staff", path: "/staff", icon: UserCog },
     { label: "Schedule", path: "/sched", icon: Calendar },
     { label: "Reports", path: "/rep", icon: ClipboardList },
-    { label: "Support", path: "/sup", icon: Hash }
+    { label: "Support", path: "/sup", icon: Hash },
   ],
   ADMIN: [
     { label: "Home", path: "/", icon: Home },
@@ -53,29 +52,34 @@ const baseMenu = {
     { label: "Reports", path: "/rep", icon: ClipboardList },
     { label: "Settings", path: "/set", icon: Settings },
     { label: "Security", path: "/sec", icon: Shield },
-    { label: "Support", path: "/sup", icon: Hash }
-  ]
+    { label: "Support", path: "/sup", icon: Hash },
+  ],
 };
 
 export default function Header() {
-  const { user, logout } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
+  const {
+    user,
+    logout,
+    showLogin,
+    openLoginModal,
+    closeLoginModal,
+  } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
 
   const menu = user ? baseMenu[user.role] : [];
 
   const handleSwitchToRegister = () => {
-    setShowLogin(false);
+    closeLoginModal();
     setShowRegister(true);
   };
 
   const handleSwitchToLogin = () => {
     setShowRegister(false);
-    setShowLogin(true);
+    openLoginModal();
   };
 
   const handleCloseModals = () => {
-    setShowLogin(false);
+    closeLoginModal();
     setShowRegister(false);
   };
 
@@ -89,7 +93,6 @@ export default function Header() {
 
         <div className="header-center">
           <div className="nav-container">
-            {/* Navigation Menu */}
             {user && (
               <nav>
                 <ul className="nav-menu">
@@ -105,8 +108,8 @@ export default function Header() {
               </nav>
             )}
           </div>
+
           <div className="header-right">
-            {/* Auth Section */}
             {user ? (
               <div className="user-info">
                 <span className="user-welcome">
@@ -119,7 +122,7 @@ export default function Header() {
             ) : (
               <div className="header-auth-buttons">
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={openLoginModal}
                   className="header-auth-btn"
                 >
                   Login
@@ -133,6 +136,7 @@ export default function Header() {
               </div>
             )}
           </div>
+
           {/* Login Modal */}
           {showLogin && (
             <LoginForm

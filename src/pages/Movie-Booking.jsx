@@ -201,7 +201,6 @@ export function MovieBooking() {
                                 </div>
                             )}
 
-                            {/* 4. Thêm nút Booking */}
                             <button
                                 className="movie-booking-button"
                                 onClick={() => handleBooking(movie.movieId)}

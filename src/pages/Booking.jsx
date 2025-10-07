@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getMovieByIdRequest } from "../services/MovieService";
 import { createBooking } from "../services/BookingService";
 import PageService from "../pages/Service";
-import BookingSummary from "./BookingSummary";
+import BookingSummary from "../components/BookingSummary";
 import "../styles/booking.css";
 import {
     ChevronLeft,
@@ -48,6 +48,7 @@ export function Booking() {
             try {
                 setLoading(true);
                 const movieData = await getMovieByIdRequest(movieId);
+                console.log(movieData);
                 setMovie(movieData);
 
                 const st = movieData.showtimes.find(

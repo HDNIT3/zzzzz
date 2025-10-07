@@ -1,7 +1,7 @@
 ﻿import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useShowtimes } from "../hooks/useShowtimes";
-import "../styles/showtime.css";
+import "../styles/showtime-select.css";
 
 const postersImport = require.context(
     "../assets/images/posters",
@@ -58,8 +58,7 @@ export function SelectShowtime() {
     if (error) return <div className="select-showtime-status error">{error}</div>;
     if (!movie) return <div className="select-showtime-status">Movie not found.</div>;
 
-    // ✅ Xử lý lấy đúng đường dẫn poster
-    let posterSrc = "/fallback.jpg"; // fallback mặc định
+    let posterSrc = "/fallback.jpg"; 
     if (movie.posterUrl) {
         const fileName = movie.posterUrl.split("/").pop();
         posterSrc = posters[fileName] || movie.posterUrl || "/fallback.jpg";

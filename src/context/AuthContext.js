@@ -1,14 +1,22 @@
 ﻿import { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { loginRequest, sendOtpRequest, verifyOtpRequest } from "../services/AuthService";
+import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
 
-  // Khi token thay đổi, decode token
+  const navigate = useNavigate();
+
+  // Mở / đóng modal login
+  const openLoginModal = () => setShowLogin(true);
+  const closeLoginModal = () => setShowLogin(false);
+
+  // Khi có token, decode lấy user info
   useEffect(() => {
     if (token) {
       try {
@@ -36,7 +44,6 @@ export function AuthProvider({ children }) {
       setToken(token);
       const decoded = jwtDecode(token);
 
-      // Lưu vào đúng storage
       if (rememberMe) {
         localStorage.setItem("token", token);
         localStorage.setItem("username", decoded.sub);
@@ -64,9 +71,10 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.clear();
     sessionStorage.clear();
+    navigate("/");
   };
 
-  // Send OTP
+  // Gửi OTP
   const sendOtp = async (userData) => {
     try {
       const res = await sendOtpRequest(userData);
@@ -81,7 +89,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Verify OTP
+  // Xác minh OTP
   const verifyOtp = async (email, otp) => {
     try {
       const res = await verifyOtpRequest(email, otp);
@@ -96,7 +104,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Load token từ storage khi mount
+  // Khi load trang, lấy token từ local/session storage
   useEffect(() => {
     const savedToken =
       localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -104,7 +112,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, sendOtp, verifyOtp }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        sendOtp,
+        verifyOtp,
+        showLogin,
+        openLoginModal,
+        closeLoginModal,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

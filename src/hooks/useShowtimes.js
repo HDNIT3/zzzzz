@@ -6,7 +6,7 @@ import {
 import { getMovieByIdRequest } from "../services/MovieService";
 
 export function useShowtimes(movieId) {
-    const [movie, setMovie] = useState(null);
+    const [movie, setMovie] = useState({});
     const [showtimes, setShowtimes] = useState([]);
     const [filteredShowtimes, setFilteredShowtimes] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
@@ -15,32 +15,43 @@ export function useShowtimes(movieId) {
     const [emptyMessage, setEmptyMessage] = useState("");
 
     const formatDate = (date) => {
+        if (!date) return "";
         const d = new Date(date);
         return d.toISOString().split("T")[0];
     };
 
     useEffect(() => {
-        if (!movieId) return;
+        if (!movieId) {
+            // Nếu chưa có movieId → trả về rỗng
+            setMovie({});
+            setShowtimes([]);
+            setFilteredShowtimes([]);
+            setEmptyMessage("No movie selected.");
+            return;
+        }
+
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
                 const [movieData, showtimeData] = await Promise.all([
-                    getMovieByIdRequest(movieId),
-                    getShowtimesForNext7DaysRequest(movieId),
+                    getMovieByIdRequest(movieId).catch(() => ({})),
+                    getShowtimesForNext7DaysRequest(movieId).catch(() => []),
                 ]);
 
-                setMovie(movieData);
-                setShowtimes(showtimeData);
+                setMovie(movieData || {});
+                const validShowtimes = Array.isArray(showtimeData) ? showtimeData : [];
+                setShowtimes(validShowtimes);
 
-                if (showtimeData.length > 0) {
-                    const today = new Date();
-                    const todayStr = formatDate(today);
+                if (validShowtimes.length > 0) {
+                    const todayStr = formatDate(new Date());
                     setSelectedDate(todayStr);
-                    setFilteredShowtimes(
-                        showtimeData.filter((st) => formatDate(st.startTime) === todayStr)
+
+                    const filtered = validShowtimes.filter(
+                        (st) => formatDate(st.startTime) === todayStr
                     );
+                    setFilteredShowtimes(filtered);
                     setEmptyMessage("");
                 } else {
                     setFilteredShowtimes([]);
@@ -48,6 +59,9 @@ export function useShowtimes(movieId) {
                 }
             } catch (err) {
                 console.error("Error fetching showtimes:", err);
+                setMovie({});
+                setShowtimes([]);
+                setFilteredShowtimes([]);
                 setError("Failed to load showtimes. Please try again.");
             } finally {
                 setLoading(false);
@@ -57,7 +71,6 @@ export function useShowtimes(movieId) {
         fetchInitialData();
     }, [movieId]);
 
-    // 🔹 Handle date selection
     const handleDateSelect = async (date) => {
         const dateStr = formatDate(date);
         setSelectedDate(dateStr);
@@ -66,10 +79,11 @@ export function useShowtimes(movieId) {
         setEmptyMessage("");
 
         try {
-            const showtimeData = await getShowtimesByDateRequest(movieId, dateStr);
+            const showtimeData = await getShowtimesByDateRequest(movieId, dateStr).catch(() => []);
+            const validShowtimes = Array.isArray(showtimeData) ? showtimeData : [];
 
-            if (showtimeData && showtimeData.length > 0) {
-                setFilteredShowtimes(showtimeData);
+            if (validShowtimes.length > 0) {
+                setFilteredShowtimes(validShowtimes);
                 setEmptyMessage("");
             } else {
                 setFilteredShowtimes([]);
@@ -78,12 +92,10 @@ export function useShowtimes(movieId) {
         } catch (err) {
             console.error("Error fetching showtimes by date:", err);
 
-            // ✅ Nếu lỗi 404 hoặc không có response, coi như không có suất chiếu
+            setFilteredShowtimes([]);
             if (err.response?.status === 404) {
-                setFilteredShowtimes([]);
                 setEmptyMessage("No showtimes available for this date.");
             } else {
-                setFilteredShowtimes([]);
                 setEmptyMessage("");
                 setError("Failed to load showtimes for the selected date.");
             }
