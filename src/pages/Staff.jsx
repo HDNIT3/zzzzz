@@ -1,6 +1,8 @@
 ﻿import React, { useEffect, useState } from "react";
+import { Users, PlusCircle, Pencil, Search, X } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getEmployees, createEmployee, updateEmployee } from "../services/EmployeeService";
+import "../styles/staff.css";
 
 export default function Staff() {
     const emptyForm = {
@@ -96,136 +98,162 @@ export default function Staff() {
     };
 
     return (
-        <div className="container py-4">
-            <div className="card shadow-sm">
-                <div className="card-header bg-primary text-white text-center">
-                    <h3 className="mb-0">Quản lý nhân viên</h3>
-                </div>
-                <div className="card-body">
-                    {message && (
-                        <div className="alert alert-info py-2 px-3" role="alert">
-                            {message}
+        <div className="staff-page">
+            <div className="staff-container">
+                {/* Header */}
+                <header className="staff-header">
+                    <div className="staff-title">
+                        <Users size={28} className="staff-title-icon" />
+                        <div>
+                            <h1>Staff Management</h1>
+                            <p>Thêm mới, cập nhật và tìm kiếm nhân viên</p>
                         </div>
-                    )}
-                    <form onSubmit={onSubmit}>
-                        <div className="row g-3">
-                            <div className="col-md-6">
-                                <label className="form-label">Họ và tên</label>
+                    </div>
+
+                    <form className="staff-search" onSubmit={onSearch}>
+                        <div className="staff-search-input">
+                            <Search size={18} />
+                            <input
+                                type="text"
+                                placeholder="Tìm theo tên, email, số điện thoại..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                            {search && (
+                                <button
+                                    type="button"
+                                    className="staff-search-clear"
+                                    onClick={() => {
+                                        setSearch("");
+                                        load("");
+                                    }}
+                                    aria-label="Clear"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
+                        <button className="staff-btn staff-btn-outline" type="submit">
+                            Tìm
+                        </button>
+                    </form>
+                </header>
+
+                {/* Form card */}
+                <section className="staff-card">
+                    <div className="staff-card-header">
+                        <div className="staff-card-title">
+                            <PlusCircle size={20} />
+                            <span>{editing ? "Cập nhật nhân viên" : "Thêm nhân viên"}</span>
+                        </div>
+                        {message && <div className="staff-banner">{message}</div>}
+                    </div>
+
+                    <form onSubmit={onSubmit} className="staff-form">
+                        <div className="staff-form-grid">
+                            <div className="staff-form-group">
+                                <label>Họ và tên</label>
                                 <input
                                     name="fullName"
                                     value={form.fullName}
                                     onChange={onChange}
-                                    className="form-control"
                                     placeholder="Nhập tên nhân viên"
                                     required
                                 />
                             </div>
-                            <div className="col-md-6">
-                                <label className="form-label">Email</label>
+
+                            <div className="staff-form-group">
+                                <label>Email</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={form.email}
                                     onChange={onChange}
-                                    className="form-control"
                                     placeholder="Email"
                                     required
                                 />
                             </div>
 
-                            <div className="col-md-4">
-                                <label className="form-label">Số điện thoại</label>
+                            <div className="staff-form-group">
+                                <label>Số điện thoại</label>
                                 <input
                                     name="phoneNumber"
                                     value={form.phoneNumber}
                                     onChange={onChange}
-                                    className="form-control"
                                     placeholder="Số điện thoại"
                                     required
                                 />
                             </div>
-                            <div className="col-md-4">
-                                <label className="form-label">Ngày sinh</label>
+
+                            <div className="staff-form-group">
+                                <label>Ngày sinh</label>
                                 <input
                                     type="date"
                                     name="dateOfBirth"
                                     value={form.dateOfBirth}
                                     onChange={onChange}
-                                    className="form-control"
                                     required
                                 />
                             </div>
-                            <div className="col-md-4">
-                                <label className="form-label">Vị trí</label>
+
+                            <div className="staff-form-group">
+                                <label>Vị trí</label>
                                 <input
                                     name="position"
                                     value={form.position}
                                     onChange={onChange}
-                                    className="form-control"
                                     placeholder="VD: Cashier"
                                     required
                                 />
                             </div>
 
-                            <div className="col-md-6">
-                                <label className="form-label">Username</label>
+                            <div className="staff-form-group">
+                                <label>Username</label>
                                 <input
                                     name="username"
                                     value={form.username}
                                     onChange={onChange}
-                                    className="form-control"
                                     placeholder="Tên đăng nhập (tạo tài khoản STAFF)"
                                     required
-                                    disabled={editing} // không thay username khi update cho đơn giản
+                                    disabled={editing}
                                 />
                             </div>
-                            <div className="col-md-6">
-                                <label className="form-label">Mật khẩu mặc định</label>
-                                <input
-                                    className="form-control"
-                                    value="12345678"
-                                    disabled
-                                />
-                                <div className="form-text">Mật khẩu mặc định cho tài khoản mới là 12345678</div>
+
+                            <div className="staff-form-group">
+                                <label>Mật khẩu mặc định</label>
+                                <input value="12345678" disabled />
+                                <small>Mật khẩu mặc định cho tài khoản mới là 12345678</small>
                             </div>
                         </div>
 
-                        <div className="d-flex justify-content-end gap-2 mt-3">
+                        <div className="staff-form-actions">
                             {editing && (
-                                <button type="button" onClick={onReset} className="btn btn-secondary">
+                                <button type="button" onClick={onReset} className="staff-btn staff-btn-secondary">
                                     Hủy
                                 </button>
                             )}
-                            <button type="submit" className={`btn ${editing ? "btn-warning" : "btn-primary"}`}>
+                            <button type="submit" className={`staff-btn ${editing ? "staff-btn-warning" : "staff-btn-primary"}`}>
                                 {editing ? "Cập nhật" : "Thêm mới"}
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
+                </section>
 
-            <div className="card shadow-sm mt-4">
-                <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Danh sách nhân viên</h5>
-                    <form className="d-flex gap-2" onSubmit={onSearch}>
-                        <input
-                            type="text"
-                            className="form-control"
-                            style={{ width: 280 }}
-                            placeholder="Tìm theo tên, email, số điện thoại..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                        <button className="btn btn-outline-primary" type="submit">Tìm</button>
-                    </form>
-                </div>
-                <div className="card-body p-0">
+                {/* Table card */}
+                <section className="staff-card staff-table-card">
+                    <div className="staff-card-header">
+                        <div className="staff-card-title">
+                            <Users size={20} />
+                            <span>Danh sách nhân viên</span>
+                        </div>
+                    </div>
+
                     {loading ? (
-                        <div className="text-center p-3">Đang tải...</div>
+                        <div className="staff-loading">Đang tải...</div>
                     ) : (
-                        <div className="table-responsive">
-                            <table className="table table-hover align-middle mb-0">
-                                <thead className="table-primary sticky-top">
+                        <div className="staff-table-wrap">
+                            <table className="staff-table">
+                                <thead>
                                     <tr>
                                         <th>Họ tên</th>
                                         <th>Email</th>
@@ -239,7 +267,7 @@ export default function Staff() {
                                 <tbody>
                                     {employees.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="text-center text-muted">Không có dữ liệu</td>
+                                            <td colSpan={7} className="staff-empty">Không có dữ liệu</td>
                                         </tr>
                                     ) : (
                                         employees.map((e) => (
@@ -251,7 +279,8 @@ export default function Staff() {
                                                 <td>{e.position}</td>
                                                 <td>{e.username}</td>
                                                 <td className="text-center">
-                                                    <button className="btn btn-sm btn-warning" onClick={() => onEdit(e)}>
+                                                    <button className="staff-btn staff-btn-warning staff-btn-sm" onClick={() => onEdit(e)}>
+                                                        <Pencil size={14} />
                                                         Sửa
                                                     </button>
                                                 </td>
@@ -262,7 +291,7 @@ export default function Staff() {
                             </table>
                         </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );
