@@ -9,7 +9,7 @@ import { SelectShowtime } from "./components/ShowtimeSelect";
 import PaymentResult from "./components/modals/PaymentResult";
 import BillList from "./components/MyBooKing";
 import UserReviews from "./pages/UserReviews";
-
+import ProfileViewer from "./pages/profile/me";
 function App() {
   return (
     <>
@@ -22,7 +22,9 @@ function App() {
         <Route path="/admin/service" element={<Service />} />
         <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="/bk-his" element={<BillList />} />
-        <Route path="/rev" element={<UserReviews />} />
+              <Route path="/rev" element={<UserReviews />} />
+
+              <Route path="/prof" element={<ProfileViewer />} />
       </Routes>
       <Footer />
     </>
