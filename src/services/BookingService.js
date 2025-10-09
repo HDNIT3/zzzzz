@@ -10,7 +10,7 @@ export async function getSeatsByShowtime(showtimeId) {
         const res = await api.get(`/api/seats/showtime/${showtimeId}`);
         return res.data;
     } catch (error) {
-        console.error("❌ Lỗi API getSeatsByShowtime:", error);
+        console.error("Error fetching seats by showtime:", error);
         throw error;
     }
 }
@@ -21,11 +21,17 @@ export async function updateSeatSelection(seatIds, action) {
 }
 
 export async function createBooking(showtimeId, customerId, seatIds) {
-    const res = await api.post("/api/bookings", {
-        showtimeId,
-        customerId,
-        seatIds
-    });
+    console.log("📤 Creating booking with:", { showtimeId, customerId, seatIds });
+    
+    const payload = {
+        showtimeId,  
+        customerId,   
+        seatIds       
+    };
+    
+    console.log("📦 Payload:", JSON.stringify(payload));
+    
+    const res = await api.post("/api/bookings", payload);
     return res.data;
 }
 

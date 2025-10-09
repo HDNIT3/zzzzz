@@ -1,9 +1,9 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieByIdRequest } from "../services/MovieService";
-import { createBooking } from "../services/BookingService";
 import PageService from "../pages/Service";
 import BookingSummary from "../components/BookingSummary";
+import { SeatSelector } from "../components/SeatSelector";
 import "../styles/booking.css";
 import {
     ChevronLeft,
@@ -16,7 +16,6 @@ import {
     Film,
     Shield
 } from "lucide-react";
-import SeatSelector from "../components/SeatSelector";
 
 const postersImport = require.context(
     "../assets/images/posters",
@@ -48,7 +47,7 @@ export function Booking() {
             try {
                 setLoading(true);
                 const movieData = await getMovieByIdRequest(movieId);
-                console.log(movieData);
+
                 setMovie(movieData);
 
                 const st = movieData.showtimes.find(
@@ -78,23 +77,6 @@ export function Booking() {
 
     const handleBackTab = () => {
         setActiveTabIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-    };
-
-    const handlePayment = async () => {
-        const userId =
-            sessionStorage.getItem("user_id") || localStorage.getItem("user_id");
-        try {
-            const booking = await createBooking(
-                showtimeId,
-                userId,
-                selectedSeats.map((seat) => seat.seatId)
-            );
-            alert(`Booking successful! Booking ID: ${booking.bookingId}`);
-            navigate("/mov-bk");
-        } catch (err) {
-            console.error("Payment error:", err);
-            setError("Payment failed. Please try again.");
-        }
     };
 
     const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);

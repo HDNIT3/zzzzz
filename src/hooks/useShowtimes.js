@@ -22,7 +22,6 @@ export function useShowtimes(movieId) {
 
     useEffect(() => {
         if (!movieId) {
-            // Nếu chưa có movieId → trả về rỗng
             setMovie({});
             setShowtimes([]);
             setFilteredShowtimes([]);

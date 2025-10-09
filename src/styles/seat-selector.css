@@ -59,7 +59,7 @@
         background: #22c55e;
     }
 
-    .seat.selected {
+    .seat.locked {
         background: #f97316;
     }
 

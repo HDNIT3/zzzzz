@@ -1,26 +1,22 @@
-import api from "./api"; // dùng axios instance có sẵn
+import api from "./api";
 
-export const getBillsByAccount = async (accountId) => {
+export const createBill = async (bookingId, paymentMethod) => {
   try {
-    const response = await api.get(`/bills/account/${accountId}`);
-    return response.data;
+    const payload = { bookingId, paymentMethod };
+    const response = await api.post("/api/bills", payload);
+    return response.data; 
   } catch (error) {
-    console.error("Error fetching bills:", error);
+    console.error("Error creating bill:", error);
     throw error;
   }
 };
 
-export const createBill = async (accountId, showtimeId, totalAmount, billBody) => {
+export const getBillsByAccount = async (accountId) => {
   try {
-    const params = new URLSearchParams({
-      accountId,
-      showtimeId,
-      totalAmount,
-    });
-    const response = await api.post(`/bills/create?${params.toString()}`, billBody);
-    return response.data;
+    const response = await api.get(`/bills/account/${accountId}`);
+    return response.data; 
   } catch (error) {
-    console.error("Error creating bill:", error);
+    console.error("Error fetching bills:", error);
     throw error;
   }
 };

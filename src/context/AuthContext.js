@@ -12,11 +12,9 @@ export function AuthProvider({ children }) {
 
   const navigate = useNavigate();
 
-  // Mở / đóng modal login
   const openLoginModal = () => setShowLogin(true);
   const closeLoginModal = () => setShowLogin(false);
 
-  // Khi có token, decode lấy user info
   useEffect(() => {
     if (token) {
       try {
@@ -26,7 +24,6 @@ export function AuthProvider({ children }) {
           role: decoded.role,
           accountId: decoded.user_id,
         });
-        console.log("Decoded token:", decoded);
       } catch (error) {
         console.error("Invalid Token");
         setUser(null);
@@ -37,7 +34,6 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  // Login
   const login = async (username, password, rememberMe = true) => {
     try {
       const token = await loginRequest(username, password);
@@ -65,7 +61,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Logout
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -74,7 +69,6 @@ export function AuthProvider({ children }) {
     navigate("/");
   };
 
-  // Gửi OTP
   const sendOtp = async (userData) => {
     try {
       const res = await sendOtpRequest(userData);
@@ -89,11 +83,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Xác minh OTP
   const verifyOtp = async (email, otp) => {
     try {
       const res = await verifyOtpRequest(email, otp);
-      console.log("OTP verified and registered:", res);
       return res;
     } catch (err) {
       console.error("Verify OTP failed:", err);
@@ -104,7 +96,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Khi load trang, lấy token từ local/session storage
   useEffect(() => {
     const savedToken =
       localStorage.getItem("token") || sessionStorage.getItem("token");
