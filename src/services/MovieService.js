@@ -5,6 +5,7 @@ export async function getAllMoviesRequest() {
     return res.data;
 }
 
+
 export async function getMovieByIdRequest(movieId) {
     const res = await api.get(`/api/movies/${movieId}`);
     return res.data;

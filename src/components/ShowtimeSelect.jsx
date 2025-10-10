@@ -54,11 +54,38 @@ export function SelectShowtime() {
         return `${dayName}, ${day}/${month}`;
     };
 
+    const parseShowtimeDisplay = (startTime) => {
+        if (!startTime) return "Unknown time";
+
+        try {
+            let timeString = startTime;
+            if (timeString.length === 16 && timeString.includes("T")) {
+                timeString += ":00";
+            }
+
+            const date = new Date(timeString);
+            
+            if (isNaN(date.getTime())) {
+                console.error("Invalid date:", startTime);
+                return "Unknown time";
+            }
+
+            return date.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true
+            });
+        } catch (error) {
+            console.error("Error parsing time:", startTime, error);
+            return "Unknown time";
+        }
+    };
+
     if (loading) return <div className="select-showtime-status">Loading...</div>;
     if (error) return <div className="select-showtime-status error">{error}</div>;
     if (!movie) return <div className="select-showtime-status">Movie not found.</div>;
 
-    let posterSrc = "/fallback.jpg"; 
+    let posterSrc = "/fallback.jpg";
     if (movie.posterUrl) {
         const fileName = movie.posterUrl.split("/").pop();
         posterSrc = posters[fileName] || movie.posterUrl || "/fallback.jpg";
@@ -68,7 +95,6 @@ export function SelectShowtime() {
         <div className="select-showtime-page">
             {/* Movie Header */}
             <div className="select-showtime-movie-header">
-                {/* ✅ Chèn poster */}
                 <img
                     src={posterSrc}
                     alt={movie.title}
@@ -105,36 +131,34 @@ export function SelectShowtime() {
             <div className="select-showtime-section">
                 <h3>Showtimes on {selectedDate}:</h3>
                 <div className="select-showtime-list">
-                    {loading ? (
-                        <p className="select-showtime-no-showtime">Loading...</p>
-                    ) : error ? (
-                        <p className="select-showtime-no-showtime error">{error}</p>
-                    ) : emptyMessage ? (
-                        <p className="select-showtime-no-showtime">{emptyMessage}</p>
-                    ) : filteredShowtimes.length > 0 ? (
-                        filteredShowtimes.map((st) => (
-                            <button
-                                key={st.showtimeId}
-                                onClick={() => navigate(`/booking/${movieId}/${st.showtimeId}`)}
-                                className="select-showtime-btn"
-                            >
-                                <span className="select-showtime-time">
-                                    {new Date(st.startTime).toLocaleTimeString("en-US", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
-                                </span>
-                                {st.language && (
-                                    <span className="select-showtime-language">{st.language}</span>
-                                )}
-                                {st.room && (
-                                    <span className="select-showtime-room">Room {st.room?.name}</span>
-                                )}
-                            </button>
-                        ))
+                    {filteredShowtimes.length > 0 ? (
+                        filteredShowtimes.map((st) => {
+
+                            const timeDisplay = parseShowtimeDisplay(st.startTime);
+
+                            return (
+                                <button
+                                    key={st.showtimeId}
+                                    onClick={() =>
+                                        navigate(`/booking/${movieId}/${st.showtimeId}`)
+                                    }
+                                    className="select-showtime-btn"
+                                >
+                                    <span className="select-showtime-time">{timeDisplay}</span>
+                                    {st.language && (
+                                        <span className="select-showtime-language">{st.language}</span>
+                                    )}
+                                    {(st.roomName || st.room?.name) && (
+                                        <span className="select-showtime-room">
+                                            {st.roomName || st.room?.name || "Unknown Room"}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })
                     ) : (
                         <p className="select-showtime-no-showtime">
-                            No showtimes available for this date.
+                            {emptyMessage || "No showtimes available for this date."}
                         </p>
                     )}
                 </div>
@@ -143,25 +167,19 @@ export function SelectShowtime() {
             {/* Tabs Section */}
             <section className="select-showtime-tabs-section">
                 <button
-                    className={`select-showtime-tab-button ${
-                        activeTab === "overview" ? "active" : ""
-                    }`}
+                    className={`select-showtime-tab-button ${activeTab === "overview" ? "active" : ""}`}
                     onClick={() => setActiveTab("overview")}
                 >
                     Overview
                 </button>
                 <button
-                    className={`select-showtime-tab-button ${
-                        activeTab === "cast" ? "active" : ""
-                    }`}
+                    className={`select-showtime-tab-button ${activeTab === "cast" ? "active" : ""}`}
                     onClick={() => setActiveTab("cast")}
                 >
                     Cast
                 </button>
                 <button
-                    className={`select-showtime-tab-button ${
-                        activeTab === "reviews" ? "active" : ""
-                    }`}
+                    className={`select-showtime-tab-button ${activeTab === "reviews" ? "active" : ""}`}
                     onClick={() => setActiveTab("reviews")}
                 >
                     Reviews

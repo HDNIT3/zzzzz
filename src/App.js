@@ -1,6 +1,6 @@
 ﻿import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import { MovieBooking } from "./pages/Movie-Booking";
+import { MovieBooking } from "./pages/MovieBooking";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { Booking } from "./pages/Booking";

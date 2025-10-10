@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieByIdRequest } from "../services/MovieService";
-import PageService from "../pages/Service";
+import OrderService from "./OrderService";
 import BookingSummary from "../components/BookingSummary";
 import { SeatSelector } from "../components/SeatSelector";
+import { createServiceOrder, addServiceOrderDetails, deleteServiceOrder } from "../services/ServiceOrderService";
 import "../styles/booking.css";
 import {
     ChevronLeft,
@@ -41,24 +42,23 @@ export function Booking() {
     const [showtime, setShowtime] = useState(null);
     const [activeTabIndex, setActiveTabIndex] = useState(0);
     const [selectedSeats, setSelectedSeats] = useState([]);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [serviceOrderId, setServiceOrderId] = useState(null);
 
     useEffect(() => {
         const fetchMovie = async () => {
             try {
                 setLoading(true);
                 const movieData = await getMovieByIdRequest(movieId);
-
                 setMovie(movieData);
 
-                const st = movieData.showtimes.find(
-                    (s) => s.showtimeId === showtimeId
-                );
+                const st = movieData.showtimes?.find(s => s.showtimeId === showtimeId);
                 setShowtime(st);
 
                 setError(null);
             } catch (err) {
                 setError("Failed to load movie information. Please try again.");
-                console.error("Fetch movie error:", err);
+                console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -66,17 +66,74 @@ export function Booking() {
         fetchMovie();
     }, [movieId, showtimeId]);
 
-
-    const handleNextTab = () => {
+    const handleNextTab = async () => {
+        // Validation cho tab Seats
         if (activeTabIndex === 0 && selectedSeats.length === 0) {
             alert("Please select at least one seat!");
             return;
         }
-        setActiveTabIndex((prevIndex) => Math.min(prevIndex + 1, TABS.length - 1));
+
+        // Tự động submit services khi chuyển từ Services → Payment
+        if (activeTabIndex === 1 && selectedServices.length > 0) {
+            try {
+                const accountId = localStorage.getItem("accountId") || sessionStorage.getItem("accountId");
+                
+                console.log("🛒 Auto-submitting services:", selectedServices);
+                
+                // Tạo service order
+                const orderRes = await createServiceOrder(accountId);
+                const orderId = orderRes.orderId || orderRes.data?.orderId;
+                
+                if (!orderId) {
+                    throw new Error("Order ID not found in response");
+                }
+                
+                console.log("🆔 Service Order ID created:", orderId);
+
+                // Thêm chi tiết services
+                const detailsPayload = selectedServices.map(s => ({
+                    serviceId: s.serviceId,
+                    quantity: s.quantity,
+                }));
+                
+                await addServiceOrderDetails(orderId, detailsPayload);
+                
+                // Lưu order ID
+                setServiceOrderId(orderId);
+                localStorage.setItem("currentServiceOrderId", orderId);
+                
+                console.log("✅ Services auto-submitted successfully");
+                
+            } catch (err) {
+                console.error("❌ Failed to auto-submit services:", err);
+                alert("❌ Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
+                return; // Không chuyển tab nếu lỗi
+            }
+        }
+
+        setActiveTabIndex(prev => Math.min(prev + 1, TABS.length - 1));
     };
 
-    const handleBackTab = () => {
-        setActiveTabIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    const handleBackTab = async () => {
+        // Tự động xóa service order khi quay lại từ Payment → Services
+        if (activeTabIndex === 2 && serviceOrderId) {
+            try {
+                console.log("🗑️ Deleting service order:", serviceOrderId);
+                await deleteServiceOrder(serviceOrderId);
+                
+                // Clear service order ID
+                setServiceOrderId(null);
+                localStorage.removeItem("currentServiceOrderId");
+                
+                console.log("✅ Service order deleted successfully");
+                
+            } catch (err) {
+                console.error("⚠️ Failed to delete service order:", err);
+                // Vẫn cho phép quay lại ngay cả khi xóa thất bại
+            }
+        }
+
+        setActiveTabIndex(prev => Math.max(prev - 1, 0));
     };
 
     const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
@@ -87,40 +144,34 @@ export function Booking() {
             return (
                 <div className="tab-content">
                     <h3>Select Seats</h3>
-                    <SeatSelector
-                        showtimeId={showtimeId}
-                        onSelectSeats={setSelectedSeats}
-                    />
+                    <SeatSelector showtimeId={showtimeId} onSelectSeats={setSelectedSeats} />
                     <p>Selected seats: {selectedSeats.length}</p>
-                    <p>
-                        Total Price: {totalPrice.toLocaleString()} $
-                    </p>
+                    <p>Total Price: {totalPrice.toLocaleString()} $</p>
                 </div>
             );
         }
         if (currentTab === "Payment") {
             return (
                 <div className="tab-content empty payment-tab-content">
-                    <div className="tab-content empty">
-                        <BookingSummary
-                            showtimeId={showtimeId}
-                            selectedSeats={selectedSeats}
-                            selectedServices={[]}
-                        />
-                    </div>
-                    
+                    <BookingSummary
+                        showtimeId={showtimeId}
+                        selectedSeats={selectedSeats}
+                        selectedServices={selectedServices}
+                    />
                 </div>
             );
         }
         return (
             <div className="tab-content empty">
-                <PageService />
+                <OrderService 
+                    selectedServices={selectedServices}
+                    onUpdateSelectedServices={setSelectedServices}
+                />
             </div>
         );
     };
 
-    if (loading)
-        return <div className="booking-status">Loading movie information...</div>;
+    if (loading) return <div className="booking-status">Loading movie information...</div>;
     if (error) return <div className="booking-status error">{error}</div>;
 
     const getPosterSrc = (posterUrl) => {
@@ -131,20 +182,25 @@ export function Booking() {
     };
     const finalPosterUrl = getPosterSrc(movie.posterUrl);
 
+    let formattedTime = "N/A";
+    let formattedDate = "N/A";
+    if (showtime?.startTime) {
+        const dt = new Date(showtime.startTime.length === 16 ? showtime.startTime + ":00" : showtime.startTime);
+        if (!isNaN(dt)) {
+            formattedTime = dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            formattedDate = dt.toLocaleDateString();
+        }
+    }
+
     return (
         <div className="booking-page">
             <div className="booking-container">
-                {/* movie summary */}
                 <div className="movie-summary">
-                    <img
-                        src={finalPosterUrl}
-                        alt={movie.title}
-                        className="summary-poster"
-                    />
+                    <img src={finalPosterUrl} alt={movie.title} className="summary-poster" />
                     <h2 className="summary-title">{movie.title}</h2>
                     <p className="summary-info">Cinema: CinemUTE Thu Duc</p>
-                    <p className="summary-info">Showtime: 20:00 - Today</p>
-                    <p className="summary-info">{showtime?.room?.name || "N/A"}</p>
+                    <p className="summary-info">Showtime: {formattedTime} - {formattedDate}</p>
+                    <p className="summary-info">{showtime?.roomName || "N/A"}</p>
                     <div className="summary-details">
                         <div className="detail-item">
                             <Film size={16} />
@@ -160,10 +216,7 @@ export function Booking() {
                         </div>
                         <div className="detail-item">
                             <Shield size={16} />
-                            <span>
-                                Age limit:{" "}
-                                <span className="age-rating-badge">{movie.ageRating}</span>
-                            </span>
+                            <span>Age limit: <span className="age-rating-badge">{movie.ageRating}</span></span>
                         </div>
                     </div>
                     <div className="summary-total">
@@ -172,13 +225,9 @@ export function Booking() {
                     </div>
                 </div>
 
-                {/* booking details */}
                 <div className="booking-details">
                     <div className="booking-header">
-                        <button
-                            className="back-button"
-                            onClick={() => navigate("/mov-bk")}
-                        >
+                        <button className="back-button" onClick={() => navigate("/mov-bk")}>
                             <ChevronLeft size={24} />
                             <span>Back to movie selection</span>
                         </button>
@@ -200,15 +249,10 @@ export function Booking() {
                     <div className="tab-content-container">{renderTabContent()}</div>
                     <div className="tab-navigation">
                         <button onClick={handleBackTab} disabled={activeTabIndex === 0}>
-                            <ChevronLeft size={16} />
-                            Back
+                            <ChevronLeft size={16} /> Back
                         </button>
-                        <button
-                            onClick={handleNextTab}
-                            disabled={activeTabIndex === TABS.length - 1}
-                        >
-                            Next
-                            <ChevronRight size={16} />
+                        <button onClick={handleNextTab} disabled={activeTabIndex === TABS.length - 1}>
+                            Next <ChevronRight size={16} />
                         </button>
                     </div>
                 </div>

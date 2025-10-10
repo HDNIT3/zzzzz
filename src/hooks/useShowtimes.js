@@ -50,6 +50,7 @@ export function useShowtimes(movieId) {
                     const filtered = validShowtimes.filter(
                         (st) => formatDate(st.startTime) === todayStr
                     );
+
                     setFilteredShowtimes(filtered);
                     setEmptyMessage("");
                 } else {
