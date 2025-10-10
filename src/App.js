@@ -14,6 +14,7 @@ import ProfileMe from "./pages/ProfileMe";
 import { Booking } from "./pages/Booking";
 import { SelectShowtime } from "./components/ShowtimeSelect";
 import { MovieBooking } from "./pages/MovieBooking";
+import Staff from "./pages/Staff";
 
 export default function App() {
     return (
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/rev" element={<UserReviews />} />
 
                 <Route path="/" element={<Home />} />
+
                 <Route path="/mov-bk" element={<MovieBooking />} />
                 <Route path="/booking/:movieId" element={<SelectShowtime />} />
                 <Route path="/booking/:movieId/:showtimeId" element={<Booking />} />
@@ -36,13 +38,12 @@ export default function App() {
                 <Route path="/bk-his" element={<BillList />} />
                 <Route path="/rev" element={<UserReviews />} />
 
-                {/* Profile */}
                 <Route path="/prof" element={<ProfileMe />} />
                 <Route path="/profile/avatar" element={<UploadAvatar />} />
                 <Route path="/profile/edit-basic" element={<UpdateInfo />} />
+                <Route path="/staff" element={<Staff />} /> {/* +++ */}
             </Routes>
 
-            {/* Footer cố định */}
             <Footer />
         </>
     );
