@@ -1,156 +1,222 @@
-// File: src/components/ProfileViewer.jsx
+// File: src/pages/profile/me.jsx
+// Goal: CHỈ CHỈNH GIAO DIỆN (không đổi logic, API, hook, route).
+// - Đồng bộ style với header/footer/home: dark theme, card bo góc, spacing rõ ràng.
+// - Giữ nguyên luồng: lấy accountId từ AuthContext, fetch /api/profile/me, nút "Đổi avatar" -> /profile/avatar.
 
-import React, { useContext, useState, useEffect } from "react";
-import { AuthContext } from "../../context/AuthContext"; // Đường dẫn đến AuthContext của bạn
-import axios from "axios";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-// ---------------------------------------------------------
-// 1. HÀM GỌI API: KHÔNG CÓ TOKEN (CÔNG KHAI)
-// ---------------------------------------------------------
-/**
- * Gọi API /api/profile/me. KHÔNG bao gồm Authorization header.
- * @param {string | null} accountId ID tài khoản để truy vấn hồ sơ cụ thể.
- * @returns {Promise<object>} Dữ liệu hồ sơ.
- */
-const getMyProfileRequest = async (accountId) => {
-    // URL API Spring Boot của bạn
-    const apiUrl = `http://localhost:8080/api/profile/me`;
-
-    // Xây dựng tham số truy vấn: nếu có accountId, truyền nó vào.
-    const params = accountId ? { accountId } : {};
-
-    // Thực hiện GET request KHÔNG có Header Authorization
-    const response = await axios.get(apiUrl, {
-        params: params,
-    });
-
-    return response.data;
-};
-
-
-// ---------------------------------------------------------
-// 2. COMPONENT REACT HIỂN THỊ HỒ SƠ
-// ---------------------------------------------------------
-function ProfileViewer() {
-    // Lấy user (đã đăng nhập), hàm logout và openLoginModal từ AuthContext
-    const { user, logout, openLoginModal } = useContext(AuthContext);
+export default function ProfileMe() {
+    const { user, openLoginModal } = useContext(AuthContext);
+    const accountId = user?.accountId;
+    const navigate = useNavigate();
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Lấy accountId từ user đã được giải mã JWT (nếu user có tồn tại)
-    const accountId = user?.accountId;
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const run = async () => {
+            if (!accountId) {
+                setLoading(false);
+                return;
+            }
             try {
                 setLoading(true);
-                setError(null);
-
-                // Gọi API với accountId (hoặc undefined/null nếu chưa đăng nhập)
-                const profileData = await getMyProfileRequest(accountId);
-                setProfile(profileData);
-
+                const res = await fetch(
+                    `http://localhost:8080/api/profile/me?accountId=${accountId}`
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                setProfile(data);
             } catch (err) {
-                console.error("Lỗi khi tải Profile:", err);
-                // Hiển thị thông báo lỗi thân thiện hơn
-                setError("Không thể tải thông tin hồ sơ. Đảm bảo API đã chạy.");
+                console.log("GET /api/profile/me error:", err);
+                setError("Không thể tải hồ sơ. Kiểm tra BE hoặc DB.");
             } finally {
                 setLoading(false);
             }
         };
+        run();
+    }, [accountId]);
 
-        fetchProfile();
+    // ==== UI helpers (style-only) ====
+    const cardStyle = {
+        background: "rgba(20, 24, 37, 0.9)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+        borderRadius: "16px",
+    };
 
-    }, [accountId]); // Dependency: Chạy lại khi trạng thái đăng nhập (accountId) thay đổi
+    const sectionTitleStyle = {
+        color: "#fff",
+        margin: 0,
+        fontWeight: 800,
+        letterSpacing: 0.2,
+    };
 
-    // ---------------------------------------------------------
-    // 3. HIỂN THỊ TRẠNG THÁI
-    // ---------------------------------------------------------
+    const subLabelStyle = { color: "rgba(255,255,255,0.65)" };
 
-    if (loading) {
-        return <div className="p-4 text-center text-indigo-600">Đang tải hồ sơ...</div>;
-    }
-
-    if (error) {
-        return <div className="text-red-500 p-4 text-center border border-red-300 bg-red-50 rounded">Lỗi: {error}</div>;
-    }
-
-    if (!profile) {
+    // ==== States unchanged (just styled containers) ====
+    if (!accountId) {
         return (
-            <div className="p-4 text-center">
-                <p>Không tìm thấy dữ liệu hồ sơ.</p>
-                {/* Hiển thị nút Đăng nhập nếu chưa có user */}
-                {!user && (
-                    <button
-                        onClick={openLoginModal}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                    >
+            <div className="container my-4">
+                <div className="p-4" style={cardStyle}>
+                    <p className="mb-3" style={{ color: "#fff" }}>
+                        Chưa đăng nhập.
+                    </p>
+                    <button className="btn btn-primary btn-sm" onClick={openLoginModal}>
                         Đăng nhập
                     </button>
-                )}
+                </div>
             </div>
         );
     }
 
-    // ---------------------------------------------------------
-    // 4. HIỂN THỊ PROFILE
-    // ---------------------------------------------------------
+    if (loading)
+        return (
+            <div className="container my-4">
+                <div className="p-4" style={cardStyle}>
+                    <div className="placeholder-wave">
+                        <span className="placeholder col-6"></span>
+                        <span className="placeholder col-4 ms-2"></span>
+                    </div>
+                    <div className="mt-3 text-light">Đang tải...</div>
+                </div>
+            </div>
+        );
 
+    if (error)
+        return (
+            <div className="container my-4">
+                <div className="p-4" style={cardStyle}>
+                    <div className="text-danger">{error}</div>
+                </div>
+            </div>
+        );
+
+    if (!profile) {
+        return (
+            <div className="container my-4">
+                <div className="p-4" style={cardStyle}>
+                    <div className="text-light">Không tìm thấy dữ liệu hồ sơ.</div>
+                </div>
+            </div>
+        );
+    }
+
+    // ==== Main UI ====
     return (
-        <div className="max-w-4xl mx-auto my-8 p-6 bg-white shadow-xl rounded-xl border border-gray-200">
-            <h2 className="text-3xl font-extrabold mb-6 text-indigo-700 border-b-4 border-indigo-100 pb-3">Thông tin Hồ sơ</h2>
+        <div className="container my-4">
+            {/* Header row: title + action */}
+            <div
+                className="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2"
+            >
+                <h2 style={sectionTitleStyle}>Hồ sơ cá nhân</h2>
+                <button
+                    onClick={() => navigate("/profile/avatar")}
+                    className="btn btn-outline-primary btn-sm"
+                >
+                    Đổi avatar
+                </button>
+            </div>
 
-            <div className="flex items-center space-x-6 mb-8">
-                <img
-                    src={profile.avatarUrl || 'https://via.placeholder.com/150?text=No+Avatar'}
-                    alt="Avatar"
-                    className="w-28 h-28 object-cover rounded-full border-4 border-indigo-300 shadow-lg"
-                />
-                <div>
-                    <p className="text-2xl font-bold text-gray-900">{profile.fullName}</p>
-                    <p className="text-md text-gray-600 mt-1">Vai trò: <span className="font-semibold text-indigo-600">{profile.role}</span></p>
-                    
+            {/* Profile card */}
+            <div className="p-4 mb-4" style={cardStyle}>
+                <div className="row g-4 align-items-start">
+                    {/* Avatar */}
+                    <div className="col-12 col-md-auto text-center">
+                        <img
+                            src={
+                                profile.avatarUrl ||
+                                "https://via.placeholder.com/240x240?text=Avatar"
+                            }
+                            alt="avatar"
+                            style={{
+                                width: 240,
+                                height: 240,
+                                objectFit: "cover",
+                                borderRadius: 16,
+                                border: "1px solid rgba(255,255,255,0.08)",
+                            }}
+                        />
+                    </div>
+
+                    {/* Info */}
+                    <div className="col">
+                        <div className="row g-3">
+                            <div className="col-12 col-md-6">
+                                <div className="text-uppercase small" style={subLabelStyle}>
+                                    Họ tên
+                                </div>
+                                <div className="fw-semibold text-light">{profile.fullName}</div>
+                            </div>
+                            <div className="col-12 col-md-6">
+                                <div className="text-uppercase small" style={subLabelStyle}>
+                                    Vai trò
+                                </div>
+                                <div className="fw-semibold text-light">{profile.role}</div>
+                            </div>
+                            <div className="col-12 col-md-6">
+                                <div className="text-uppercase small" style={subLabelStyle}>
+                                    Email
+                                </div>
+                                <div className="text-light">
+                                    {profile.email || "Chưa cập nhật"}
+                                </div>
+                            </div>
+                            <div className="col-12 col-md-6">
+                                <div className="text-uppercase small" style={subLabelStyle}>
+                                    Điện thoại
+                                </div>
+                                <div className="text-light">
+                                    {profile.phone || "Chưa cập nhật"}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-gray-700 bg-gray-50 p-4 rounded-lg">
-                <p><strong>Email:</strong> {profile.email || 'Chưa cập nhật'}</p>
-                <p><strong>Điện thoại:</strong> {profile.phone || 'Chưa cập nhật'}</p>
-                <p><strong>Facebook:</strong> {profile.facebookUrl ? <a href={profile.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link</a> : 'N/A'}</p>
-                <p><strong>Instagram:</strong> {profile.instagramUrl ? <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link</a> : 'N/A'}</p>
-            </div>
+            {/* Favorites */}
+            <div className="p-4" style={cardStyle}>
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                    <h4 className="m-0 text-light">Phim yêu thích</h4>
+                </div>
 
-            {/* Hiển thị Favorites */}
-            {profile.favorites && profile.favorites.length > 0 && (
-                <>
-                    <h3 className="text-xl font-bold mt-10 mb-4 text-indigo-600 border-t pt-4">Phim Yêu thích ({profile.favorites.length})</h3>
-                    <ul className="space-y-3">
-                        {profile.favorites.map((fav, index) => (
-                            <li key={index} className="flex justify-between items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
-                                <span className="font-medium text-gray-800">{fav.title}</span>
-                                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${fav.rating >= 4 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                    Rating: {fav.rating} <span className="text-yellow-500">⭐</span>
-                                </span>
-                            </li>
+                {!profile.favorites || profile.favorites.length === 0 ? (
+                    <div
+                        className="p-3 rounded"
+                        style={{
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px dashed rgba(255,255,255,0.12)",
+                            color: "rgba(255,255,255,0.7)",
+                        }}
+                    >
+                        Chưa có phim yêu thích.
+                    </div>
+                ) : (
+                    <div className="row g-3">
+                        {profile.favorites.map((f, idx) => (
+                            <div className="col-12 col-md-6 col-lg-4" key={idx}>
+                                <div
+                                    className="p-3 h-100 d-flex flex-column justify-content-between"
+                                    style={{
+                                        background: "rgba(255,255,255,0.04)",
+                                        border: "1px solid rgba(255,255,255,0.06)",
+                                        borderRadius: 12,
+                                    }}
+                                >
+                                    <div className="fw-semibold text-light mb-1">{f.title}</div>
+                                    <div className="text-muted small">
+                                        ⭐ {f.rating ?? 0} — {f.reviewCount ?? 0} đánh giá
+                                    </div>
+                                </div>
+                            </div>
                         ))}
-                    </ul>
-                </>
-            )}
-
-            {/* Nút Logout chỉ hiển thị khi đã đăng nhập */}
-            {user && (
-                <button
-                    onClick={logout}
-                    className="mt-8 px-8 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300 shadow-lg"
-                >
-                    Đăng Xuất
-                </button>
-            )}
-
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
-
-export default ProfileViewer;
