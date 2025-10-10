@@ -41,7 +41,7 @@ export default function App() {
                 <Route path="/prof" element={<ProfileMe />} />
                 <Route path="/profile/avatar" element={<UploadAvatar />} />
                 <Route path="/profile/edit-basic" element={<UpdateInfo />} />
-                <Route path="/staff" element={<Staff />} /> {/* +++ */}
+                <Route path="/staff" element={<Staff />} /> 
             </Routes>
 
             <Footer />

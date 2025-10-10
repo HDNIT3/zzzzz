@@ -221,8 +221,8 @@ export default function Staff() {
 
                             <div className="staff-form-group">
                                 <label>Mật khẩu mặc định</label>
-                                <input value="12345678" disabled />
-                                <small>Mật khẩu mặc định cho tài khoản mới là 12345678</small>
+                                <input value="User@123" disabled />
+                                <small>Mật khẩu mặc định cho tài khoản mới là User@123</small>
                             </div>
                         </div>
 
