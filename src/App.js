@@ -19,6 +19,8 @@ import { MovieBooking } from "./pages/Movie-Booking";
 import { Booking } from "./pages/Booking";
 import { SelectShowtime } from "./components/ShowtimeSelect";
 
+import EditBasic from "./pages/profile/EditBasic";
+
 export default function App() {
     return (
         <>
@@ -45,6 +47,7 @@ export default function App() {
                 {/* Profile */}
                 <Route path="/prof" element={<ProfileViewer />} />
                 <Route path="/profile/avatar" element={<AvatarUploader />} />
+                <Route path="/profile/edit-basic" element={<EditBasic />} />
             </Routes>
 
             {/* Footer cố định */}

@@ -176,6 +176,14 @@ export default function ProfileMe() {
                         </div>
                     </div>
 
+                    <button
+                        onClick={() => navigate("/profile/edit-basic")}
+                        className="btn btn-sm btn-outline-info ms-2"
+                    >
+                        Chỉnh sửa thông tin
+                    </button>
+
+
                     {/* Mạng xã hội (read-only, màu xanh biển sáng, mở tab mới) */}
                     <div className="mt-4">
                         <h5 className="mb-3 text-white fw-semibold">Mạng xã hội</h5>
