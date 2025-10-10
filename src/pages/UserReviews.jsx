@@ -20,7 +20,6 @@ export default function UserReviews() {
 
   const applyFilters = () => {
     setPage(1);
-    // Implement filter logic in useReviews hook
   };
 
   const clearFilters = () => {

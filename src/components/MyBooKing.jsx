@@ -23,13 +23,9 @@ export default function MyBooking() {
         setLoading(true);
         setError(null);
         const data = await getBillsByAccount(accountId);
-        
-        console.log("📦 Raw API Response:", data);
-        console.log("📊 Is Array?", Array.isArray(data));
-        console.log("🔢 Length:", data?.length);
+      
         
         if (Array.isArray(data)) {
-          // Sort bills by date (newest first)
           const sortedBills = data.sort((a, b) => 
             new Date(b.startTime) - new Date(a.startTime)
           );

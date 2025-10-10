@@ -18,10 +18,8 @@ import { MovieBooking } from "./pages/MovieBooking";
 export default function App() {
     return (
         <>
-            {/* Header cố định ở mọi trang */}
             <Header />
 
-            {/* Nội dung từng trang */}
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/admin/service" element={<Service />} />
