@@ -175,6 +175,41 @@ export default function ProfileMe() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Mạng xã hội (read-only, màu xanh biển sáng, mở tab mới) */}
+                    <div className="mt-4">
+                        <h5 className="mb-3 text-white fw-semibold">Mạng xã hội</h5>
+                        <div className="d-flex flex-wrap gap-3">
+                            {[
+                                { label: "Facebook", url: profile.facebookUrl, color: "#0d6efd" },
+                                { label: "Instagram", url: profile.instagramUrl, color: "#0dcaf0" },
+                                { label: "Twitter", url: profile.twitterUrl, color: "#00acee" },
+                                { label: "LinkedIn", url: profile.linkedInUrl, color: "#0077b5" },
+                            ].map((item, idx) => (
+                                <a
+                                    key={idx}
+                                    href={item.url || "#"}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="btn btn-sm fw-semibold text-white"
+                                    style={{
+                                        minWidth: "120px",
+                                        backgroundColor: item.url ? item.color : "#6c757d",
+                                        opacity: item.url ? 1 : 0.5,
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        cursor: item.url ? "pointer" : "not-allowed",
+                                        transition: "all 0.3s ease",
+                                    }}
+                                >
+                                    {item.label}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+
+
                 </div>
             </div>
 
