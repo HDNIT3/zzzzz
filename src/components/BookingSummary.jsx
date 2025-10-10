@@ -3,7 +3,6 @@ import { useAuth } from "../hooks/useAuth";
 import { createPaymentRequest } from "../services/PaymentService";
 import { getServiceOrderById } from "../services/ServiceOrderService";
 import "../styles/booking-summary.css";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function BookingSummary({ showtimeId, selectedSeats, selectedServices: selectedServicesProp }) {
     const { user } = useAuth();

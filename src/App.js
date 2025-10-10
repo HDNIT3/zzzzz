@@ -1,21 +1,19 @@
 
-﻿import { Routes, Route } from "react-router-dom";
-import { MovieBooking } from "./pages/MovieBooking";
+import { Routes, Route } from "react-router-dom";
+
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-
-// Pages
 import Home from "./pages/Home";
 import Service from "./pages/Admin/Service";
 import PaymentResult from "./components/modals/PaymentResult";
 import BillList from "./components/MyBooKing";
 import UserReviews from "./pages/UserReviews";
-import ProfileViewer from "./pages/profile/me";
-import AvatarUploader from "./pages/profile/AvatarUploader";
+import UploadAvatar from "./components/modals/profile/UploadAvatar";
+import UpdateInfo from "./components/modals/profile/UpdateInfo";
+import ProfileMe from "./pages/ProfileMe";
 import { Booking } from "./pages/Booking";
 import { SelectShowtime } from "./components/ShowtimeSelect";
-
-import EditBasic from "./pages/profile/EditBasic";
+import { MovieBooking } from "./pages/MovieBooking";
 
 export default function App() {
     return (
@@ -41,9 +39,9 @@ export default function App() {
                 <Route path="/rev" element={<UserReviews />} />
 
                 {/* Profile */}
-                <Route path="/prof" element={<ProfileViewer />} />
-                <Route path="/profile/avatar" element={<AvatarUploader />} />
-                <Route path="/profile/edit-basic" element={<EditBasic />} />
+                <Route path="/prof" element={<ProfileMe />} />
+                <Route path="/profile/avatar" element={<UploadAvatar />} />
+                <Route path="/profile/edit-basic" element={<UpdateInfo />} />
             </Routes>
 
             {/* Footer cố định */}

@@ -1,6 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
 import { getAllServices, createService, updateService } from "../../services/ServiceService";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "../../styles/service-admin.css";
 
 export default function ServiceAdmin() {
