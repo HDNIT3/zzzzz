@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useCustomers } from '../hooks/useCustomers';
-import { getCustomerBills } from '../services/CustomerService';
+import { getCustomerBills } from '../services/tempfile';
 import '../styles/CustomerManagement.css';
 
 const CustomerManagement = () => {

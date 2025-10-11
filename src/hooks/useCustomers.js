@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getCustomers, getCustomerBills } from "../services/CustomerService";
+import { getCustomers, getCustomerBills } from "../services/tempfile";
 
 export const useCustomers = (initialFilters = {}, initialPageSize = 10) => {
   const [customers, setCustomers] = useState([]);
