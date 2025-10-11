@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getMovieByIdRequest } from "../services/MovieService";
+import { getMovieById } from "../services/MovieService";
 import OrderService from "./OrderService";
 import BookingSummary from "../components/BookingSummary";
 import { SeatSelector } from "../components/SeatSelector";
@@ -49,10 +49,12 @@ export function Booking() {
         const fetchMovie = async () => {
             try {
                 setLoading(true);
-                const movieData = await getMovieByIdRequest(movieId);
+                const movieData = await getMovieById(movieId); // 🟢 Gọi API thực tế
                 setMovie(movieData);
 
-                const st = movieData.showtimes?.find(s => s.showtimeId === showtimeId);
+                const st = movieData.showtimes?.find(
+                    (s) => String(s.showtimeId) === String(showtimeId)
+                );
                 setShowtime(st);
 
                 setError(null);
@@ -67,47 +69,40 @@ export function Booking() {
     }, [movieId, showtimeId]);
 
     const handleNextTab = async () => {
-        // Validation cho tab Seats
+
         if (activeTabIndex === 0 && selectedSeats.length === 0) {
             alert("Please select at least one seat!");
             return;
         }
 
-        // Tự động submit services khi chuyển từ Services → Payment
         if (activeTabIndex === 1 && selectedServices.length > 0) {
             try {
                 const accountId = localStorage.getItem("accountId") || sessionStorage.getItem("accountId");
-                
+
                 console.log("🛒 Auto-submitting services:", selectedServices);
-                
-                // Tạo service order
+
                 const orderRes = await createServiceOrder(accountId);
                 const orderId = orderRes.orderId || orderRes.data?.orderId;
-                
+
                 if (!orderId) {
                     throw new Error("Order ID not found in response");
                 }
-                
-                console.log("🆔 Service Order ID created:", orderId);
 
-                // Thêm chi tiết services
                 const detailsPayload = selectedServices.map(s => ({
                     serviceId: s.serviceId,
                     quantity: s.quantity,
                 }));
-                
+
                 await addServiceOrderDetails(orderId, detailsPayload);
-                
-                // Lưu order ID
+
                 setServiceOrderId(orderId);
                 localStorage.setItem("currentServiceOrderId", orderId);
-                
-                console.log("✅ Services auto-submitted successfully");
-                
+
+
             } catch (err) {
                 console.error("❌ Failed to auto-submit services:", err);
                 alert("❌ Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
-                return; // Không chuyển tab nếu lỗi
+                return;
             }
         }
 
@@ -115,18 +110,16 @@ export function Booking() {
     };
 
     const handleBackTab = async () => {
-        // Tự động xóa service order khi quay lại từ Payment → Services
         if (activeTabIndex === 2 && serviceOrderId) {
             try {
                 console.log("🗑️ Deleting service order:", serviceOrderId);
                 await deleteServiceOrder(serviceOrderId);
-                
-                // Clear service order ID
+
                 setServiceOrderId(null);
                 localStorage.removeItem("currentServiceOrderId");
-                
+
                 console.log("✅ Service order deleted successfully");
-                
+
             } catch (err) {
                 console.error("⚠️ Failed to delete service order:", err);
                 // Vẫn cho phép quay lại ngay cả khi xóa thất bại
@@ -163,7 +156,7 @@ export function Booking() {
         }
         return (
             <div className="tab-content empty">
-                <OrderService 
+                <OrderService
                     selectedServices={selectedServices}
                     onUpdateSelectedServices={setSelectedServices}
                 />

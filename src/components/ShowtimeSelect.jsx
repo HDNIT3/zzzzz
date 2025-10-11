@@ -197,7 +197,7 @@ export function SelectShowtime() {
                                 <strong>Duration:</strong> {movie.duration} minutes
                             </p>
                             <p>
-                                <strong>Rating:</strong> {movie.rating}/10
+                                <strong>Rating:</strong> {movie.rating ? Number(movie.rating).toFixed(2) : "N/A"}/10
                             </p>
                             <p>
                                 <strong>Age Rating:</strong> {movie.ageRating}
@@ -236,7 +236,7 @@ export function SelectShowtime() {
                                     <div key={review.reviewId} className="select-showtime-review-item">
                                         <div className="select-showtime-review-header">
                                             <span className="select-showtime-review-author">
-                                                {review.customer?.fullName || "Anonymous"}
+                                                {review.cusName || "Anonymous"}
                                             </span>
                                             <span className="select-showtime-review-rating">
                                                 ⭐ {review.rating}/10

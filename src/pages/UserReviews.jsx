@@ -1,61 +1,169 @@
-import { useState } from "react";
-import { Star, Filter, Calendar, User, Film, X } from "lucide-react";
+import { useState, useContext, useEffect } from "react";
+import { Star, Filter, Calendar, Film, X, Plus, Send, Search } from "lucide-react";
 import { useReviews } from "../hooks/useReview";
+import { useMovies } from "../hooks/useMovies";
+import { AuthContext } from "../context/AuthContext";
 import "../styles/user-reviews.css";
 
 export default function UserReviews() {
-  const { reviews, page, setPage, size, setSize, loading } = useReviews();
+  const { user } = useContext(AuthContext);
+  const {
+    reviews,
+    page,
+    setPage,
+    size,
+    setSize,
+    loading,
+    error,
+    appliedFilters,
+    applyFilters,
+    clearFilters,
+    createNewReview,
+  } = useReviews();
+
+  const { movies, fetchAllMovies } = useMovies();
+
   const [showFilters, setShowFilters] = useState(false);
-  
-  const [filters, setFilters] = useState({
-    movieId: "",
-    customerId: "",
+  const [showCreateReview, setShowCreateReview] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+
+  const [localFilters, setLocalFilters] = useState({
+    movieTitle: "",
     from: "",
-    to: ""
+    to: "",
   });
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const [newReview, setNewReview] = useState({
+    movieId: "",
+    movieTitle: "",
+    content: "",
+    rating: 5,
+  });
+
+  const [movieSearchQuery, setMovieSearchQuery] = useState("");
+  const [showMovieDropdown, setShowMovieDropdown] = useState(false);
+  const [filteredMovies, setFilteredMovies] = useState([]);
+
+  useEffect(() => {
+    fetchAllMovies();
+  }, []);
+
+  useEffect(() => {
+    if (movieSearchQuery.trim() === "") {
+      setFilteredMovies([]);
+      return;
+    }
+
+    const filtered = movies.filter((movie) =>
+      movie.title?.toLowerCase().includes(movieSearchQuery.toLowerCase())
+    );
+    setFilteredMovies(filtered.slice(0, 10)); 
+  }, [movieSearchQuery, movies]);
+
+  useEffect(() => {
+    setLocalFilters(appliedFilters);
+  }, [appliedFilters]);
+
+  const handleLocalFilterChange = (key, value) => {
+    setLocalFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const applyFilters = () => {
-    setPage(1);
+  const handleApplyFilters = () => {
+    applyFilters(localFilters, () => setShowFilters(false));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      movieId: "",
-      customerId: "",
-      from: "",
-      to: ""
-    });
-    setPage(1);
+  const handleClearFilters = () => {
+    const emptyFilters = { movieTitle: "", from: "", to: "" };
+    setLocalFilters(emptyFilters);
+    clearFilters();
+  };
+
+  const handleMovieSelect = (movie) => {
+    setNewReview((prev) => ({
+      ...prev,
+      movieId: movie.movieId,
+      movieTitle: movie.title,
+    }));
+    setMovieSearchQuery(movie.title);
+    setShowMovieDropdown(false);
+  };
+
+  const handleCreateReview = async (e) => {
+    e.preventDefault();
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    if (!user) {
+      setSubmitError("Please login to create a review");
+      return;
+    }
+
+    if (!newReview.movieId) {
+      setSubmitError("Please select a movie");
+      return;
+    }
+
+    try {
+      await createNewReview({
+        movieId: newReview.movieId,
+        content: newReview.content,
+        rating: newReview.rating,
+      });
+      setSubmitSuccess("Review created successfully!");
+      setShowCreateReview(false);
+      setNewReview({ movieId: "", movieTitle: "", content: "", rating: 5 });
+      setMovieSearchQuery("");
+
+      setTimeout(() => setSubmitSuccess(""), 3000);
+    } catch (error) {
+      setSubmitError(error.message || "Failed to create review");
+    }
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const renderStars = (rating) => {
-    return (
-      <div className="user-reviews-stars-container">
-        {[1, 2, 3, 4, 5].map(star => (
-          <Star
-            key={star}
-            size={16}
-            className={star <= rating ? "user-reviews-star-filled" : "user-reviews-star-empty"}
-          />
-        ))}
-      </div>
-    );
-  };
+  const renderStars = (rating) => (
+    <div className="user-reviews-stars-container">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={16}
+          className={
+            star <= Math.round(rating / 2)
+              ? "user-reviews-star-filled"
+              : "user-reviews-star-empty"
+          }
+        />
+      ))}
+    </div>
+  );
+
+  const renderRatingSelector = (currentRating, onChange) => (
+    <div className="user-reviews-rating-selector">
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+        <button
+          key={rating}
+          type="button"
+          onClick={() => onChange(rating)}
+          className={`user-reviews-rating-btn ${
+            currentRating >= rating ? "active" : ""
+          }`}
+        >
+          {rating}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="user-reviews user-reviews-page">
@@ -64,43 +172,209 @@ export default function UserReviews() {
         <div className="user-reviews-header">
           <div className="user-reviews-header-content">
             <h1 className="user-reviews-page-title">User Reviews</h1>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="user-reviews-btn-filter"
-            >
-              <Filter size={20} />
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </button>
+            <div className="user-reviews-header-actions">
+              {user && (
+                <button
+                  onClick={() => setShowCreateReview(!showCreateReview)}
+                  className="user-reviews-btn-create"
+                >
+                  <Plus size={20} />
+                  New Review
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="user-reviews-btn-filter"
+              >
+                <Filter size={20} />
+                {showFilters ? "Hide" : "Filter"}
+              </button>
+            </div>
           </div>
 
-          {/* Filters Panel */}
+          {/* Success/Error */}
+          {submitSuccess && (
+            <div className="user-reviews-alert user-reviews-alert-success">
+              {submitSuccess}
+            </div>
+          )}
+          {submitError && (
+            <div className="user-reviews-alert user-reviews-alert-error">
+              {submitError}
+            </div>
+          )}
+
+          {/* Create Form */}
+          {showCreateReview && (
+            <form
+              onSubmit={handleCreateReview}
+              className="user-reviews-create-form"
+            >
+              <h3 className="user-reviews-form-title">Create New Review</h3>
+
+              {/* Movie Search */}
+              <div className="user-reviews-form-group">
+                <label className="user-reviews-form-label">
+                  <Film size={16} />
+                  Search Movie
+                </label>
+                <div className="user-reviews-movie-search-wrapper">
+                  <div className="user-reviews-search-input-wrapper">
+                    <Search size={16} className="user-reviews-search-icon" />
+                    <input
+                      type="text"
+                      value={movieSearchQuery}
+                      onChange={(e) => {
+                        setMovieSearchQuery(e.target.value);
+                        setShowMovieDropdown(true);
+                      }}
+                      onFocus={() => setShowMovieDropdown(true)}
+                      placeholder="Type to search for a movie..."
+                      className="user-reviews-form-input user-reviews-search-input"
+                      autoComplete="off"
+                    />
+                    {movieSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMovieSearchQuery("");
+                          setNewReview((prev) => ({
+                            ...prev,
+                            movieId: "",
+                            movieTitle: "",
+                          }));
+                          setShowMovieDropdown(false);
+                        }}
+                        className="user-reviews-clear-search"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown */}
+                  {showMovieDropdown && movieSearchQuery && (
+                    <div className="user-reviews-movie-dropdown">
+                      {filteredMovies.length > 0 ? (
+                        filteredMovies.map((movie) => (
+                          <div
+                            key={movie.movieId}
+                            onClick={() => handleMovieSelect(movie)}
+                            className="user-reviews-movie-option"
+                          >
+                            <div className="user-reviews-movie-option-content">
+                              {movie.imagePortrait && (
+                                <img
+                                  src={movie.imagePortrait}
+                                  alt={movie.title}
+                                  className="user-reviews-movie-thumbnail"
+                                />
+                              )}
+                              <div className="user-reviews-movie-info-dropdown">
+                                <p className="user-reviews-movie-title-dropdown">
+                                  {movie.title}
+                                </p>
+                                <p className="user-reviews-movie-year">
+                                  {movie.releaseDate
+                                    ? new Date(movie.releaseDate).getFullYear()
+                                    : "N/A"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="user-reviews-no-results">
+                          No movies found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Movie Display */}
+                {newReview.movieId && (
+                  <div className="user-reviews-selected-movie">
+                    <Film size={14} />
+                    <span>Selected: {newReview.movieTitle}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="user-reviews-form-group">
+                <label className="user-reviews-form-label">
+                  <Star size={16} />
+                  Rating (1-10)
+                </label>
+                {renderRatingSelector(newReview.rating, (rating) =>
+                  setNewReview((prev) => ({ ...prev, rating }))
+                )}
+              </div>
+
+              <div className="user-reviews-form-group">
+                <label className="user-reviews-form-label">Review Content</label>
+                <textarea
+                  value={newReview.content}
+                  onChange={(e) =>
+                    setNewReview((prev) => ({
+                      ...prev,
+                      content: e.target.value,
+                    }))
+                  }
+                  placeholder="Write your review here..."
+                  className="user-reviews-form-textarea"
+                  rows="4"
+                  minLength="10"
+                  maxLength="1000"
+                  required
+                />
+                <small className="user-reviews-char-count">
+                  {newReview.content.length}/1000 characters
+                </small>
+              </div>
+
+              <div className="user-reviews-form-actions">
+                <button type="submit" className="user-reviews-btn-submit">
+                  <Send size={16} />
+                  Submit Review
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateReview(false);
+                    setSubmitError("");
+                    setMovieSearchQuery("");
+                    setNewReview({
+                      movieId: "",
+                      movieTitle: "",
+                      content: "",
+                      rating: 5,
+                    });
+                  }}
+                  className="user-reviews-btn-cancel"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Filters */}
           {showFilters && (
             <div className="user-reviews-filters-panel">
               <div className="user-reviews-filters-grid">
                 <div className="user-reviews-filter-item">
                   <label className="user-reviews-filter-label">
                     <Film size={16} className="user-reviews-label-icon" />
-                    Movie ID
+                    Movie Title
                   </label>
                   <input
                     type="text"
-                    value={filters.movieId}
-                    onChange={(e) => handleFilterChange('movieId', e.target.value)}
-                    placeholder="Enter movie ID"
-                    className="user-reviews-filter-input"
-                  />
-                </div>
-
-                <div className="user-reviews-filter-item">
-                  <label className="user-reviews-filter-label">
-                    <User size={16} className="user-reviews-label-icon" />
-                    Customer ID
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.customerId}
-                    onChange={(e) => handleFilterChange('customerId', e.target.value)}
-                    placeholder="Enter customer ID"
+                    value={localFilters.movieTitle}
+                    onChange={(e) =>
+                      handleLocalFilterChange("movieTitle", e.target.value)
+                    }
+                    placeholder="Search by movie title"
                     className="user-reviews-filter-input"
                   />
                 </div>
@@ -112,8 +386,10 @@ export default function UserReviews() {
                   </label>
                   <input
                     type="date"
-                    value={filters.from}
-                    onChange={(e) => handleFilterChange('from', e.target.value)}
+                    value={localFilters.from}
+                    onChange={(e) =>
+                      handleLocalFilterChange("from", e.target.value)
+                    }
                     className="user-reviews-filter-input"
                   />
                 </div>
@@ -125,27 +401,42 @@ export default function UserReviews() {
                   </label>
                   <input
                     type="date"
-                    value={filters.to}
-                    onChange={(e) => handleFilterChange('to', e.target.value)}
+                    value={localFilters.to}
+                    onChange={(e) =>
+                      handleLocalFilterChange("to", e.target.value)
+                    }
                     className="user-reviews-filter-input"
                   />
                 </div>
               </div>
 
               <div className="user-reviews-filter-actions">
-                <button onClick={applyFilters} className="user-reviews-btn-apply">
+                <button
+                  onClick={handleApplyFilters}
+                  className="user-reviews-btn-apply"
+                >
                   Apply Filters
                 </button>
-                <button onClick={clearFilters} className="user-reviews-btn-clear">
+                <button
+                  onClick={handleClearFilters}
+                  className="user-reviews-btn-clear"
+                >
                   <X size={16} />
-                  Clear Filters
+                  Clear
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Reviews List */}
+        {/* Error state */}
+        {error && (
+          <div className="user-reviews-error-container">
+            <p className="user-reviews-error-text">{error}</p>
+          </div>
+        )}
+
+        {/* Reviews list */}
         {loading ? (
           <div className="user-reviews-loading-container">
             <div className="user-reviews-spinner"></div>
@@ -164,21 +455,22 @@ export default function UserReviews() {
                     <div className="user-reviews-user-rating">
                       <h3 className="user-reviews-user-name">{review.cusName}</h3>
                       {renderStars(review.rating)}
+                      <span className="user-reviews-rating-number">
+                        {review.rating}/10
+                      </span>
                     </div>
                     <p className="user-reviews-movie-info">
-                      Review for: <span className="user-reviews-movie-title">{review.movieTitle}</span>
+                      <Film size={14} />
+                      <span className="user-reviews-movie-title">
+                        {review.movieTitle}
+                      </span>
                     </p>
                   </div>
-                  <span className="user-reviews-date">{formatDate(review.createdAt)}</span>
+                  <span className="user-reviews-date">
+                    {formatDate(review.createdAt)}
+                  </span>
                 </div>
-                
                 <p className="user-reviews-content">{review.content}</p>
-                
-                <div className="user-reviews-meta">
-                  <span>Review ID: {review.reviewId}</span>
-                  <span>Customer ID: {review.customerId}</span>
-                  <span>Movie ID: {review.movieId}</span>
-                </div>
               </div>
             ))}
           </div>
@@ -189,7 +481,9 @@ export default function UserReviews() {
           <div className="user-reviews-pagination-container">
             <div className="user-reviews-pagination-content">
               <div className="user-reviews-page-size-selector">
-                <label className="user-reviews-page-size-label">Items per page:</label>
+                <label className="user-reviews-page-size-label">
+                  Items per page:
+                </label>
                 <select
                   value={size}
                   onChange={(e) => {
@@ -213,11 +507,10 @@ export default function UserReviews() {
                 >
                   Previous
                 </button>
-                <span className="user-reviews-page-number">
-                  Page {page}
-                </span>
+                <span className="user-reviews-page-number">Page {page}</span>
                 <button
                   onClick={() => setPage(page + 1)}
+                  disabled={reviews.length < size}
                   className="user-reviews-btn-pagination"
                 >
                   Next

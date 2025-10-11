@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  getAllMoviesRequest,
-  getHotMoviesRequest,
-  getUpcomingMoviesRequest,
-  createMovieRequest,
-  updateMovieRequest,
-  deleteMovieRequest,
+  getAllMovies,
+  getHotMovies,
+  getUpcomingMovies,
+  createMovie,
+  updateMovie,
+  deleteMovie,
 } from "../services/MovieService";
 
 export function useMovies(token) {
@@ -18,7 +18,7 @@ export function useMovies(token) {
   const fetchAllMovies = async () => {
     try {
       setLoading(true);
-      const data = await getAllMoviesRequest();
+      const data = await getAllMovies();
       setMovies(data);
       setError(null);
     } catch (err) {
@@ -31,7 +31,7 @@ export function useMovies(token) {
   const fetchHotMovies = async () => {
     try {
       setLoading(true);
-      const data = await getHotMoviesRequest();
+      const data = await getHotMovies();
       setHotMovies(data);
       setError(null);
     } catch (err) {
@@ -44,52 +44,11 @@ export function useMovies(token) {
   const fetchUpcomingMovies = async () => {
     try {
       setLoading(true);
-      const data = await getUpcomingMoviesRequest();
+      const data = await getUpcomingMovies();
       setUpcomingMovies(data);
       setError(null);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createMovie = async (movieData) => {
-    try {
-      setLoading(true);
-      const created = await createMovieRequest(movieData, token);
-      setMovies((prev) => [...prev, created]);
-      return created;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateMovie = async (id, movieData) => {
-    try {
-      setLoading(true);
-      const updated = await updateMovieRequest(id, movieData, token);
-      setMovies((prev) => prev.map((m) => (m.id === id ? updated : m)));
-      return updated;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteMovie = async (id) => {
-    try {
-      setLoading(true);
-      await deleteMovieRequest(id, token);
-      setMovies((prev) => prev.filter((m) => m.id !== id));
-    } catch (err) {
-      setError(err.message);
-      throw err;
     } finally {
       setLoading(false);
     }
