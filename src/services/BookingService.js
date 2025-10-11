@@ -5,18 +5,8 @@ export async function getSeatsByRoom(roomId) {
   return res.data;
 }
 
-export async function getSeatsByShowtime(showtimeId) {
-  try {
-    const res = await api.get(`/api/seats/showtime/${showtimeId}`);
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching seats by showtime:", error);
-    throw error;
-  }
-}
-
-export async function updateSeatSelection(seatIds, action) {
-  const res = await api.post("/api/seats/select", { seatIds, action });
+export async function updateSeatSelection(seatIds, status) {
+  const res = await api.post("/api/seats/select", { seatIds, status });
   return res.data.seats;
 }
 
@@ -27,8 +17,6 @@ export const createBooking = async (showtimeId, customerId, seatIds, serviceOrde
     const res = await api.post("/api/bookings", payload);
     return res.data; 
   } catch (error) {
-    console.error("❌ Error creating booking:", error);
-    console.error("❌ Error response:", error.response?.data);
     throw error;
   }
 };

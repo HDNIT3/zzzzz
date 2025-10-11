@@ -1,8 +1,8 @@
 ﻿import React, { useState, useEffect, useMemo } from "react";
-import "../styles/seat-selector.css";
-import { getSeatsByShowtime } from "../services/BookingService";
+import "../../../styles/seat-selector.css";
+import { getSeatsByShowtime } from "../../../services/ShowtimeService";
 
-export const SeatSelector = ({ showtimeId, onSelectSeats }) => {
+export default function SeatSelector({ showtimeId, onSelectSeats }) {
   const [seatMap, setSeatMap] = useState({});
   const [error, setError] = useState(null);
 

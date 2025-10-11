@@ -2,8 +2,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieById } from "../services/MovieService";
 import OrderService from "./OrderService";
-import BookingSummary from "../components/BookingSummary";
-import { SeatSelector } from "../components/SeatSelector";
+import BookingSummary from "../components/modals/booking/BookingSummary";
+import SeatSelector from "../components/modals/booking/SeatSelector";
 import { createServiceOrder, addServiceOrderDetails, deleteServiceOrder } from "../services/ServiceOrderService";
 import "../styles/booking.css";
 import {

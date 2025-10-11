@@ -6,7 +6,7 @@ export const getCustomers = async (params = {}) => {
 };
 
 export const getCustomerBills = async (customerId, movieTitle = "") => {
-    const res = await api.get(`/api/customers/${customerId}/bills`, {
+    const res = await api.get(`/api/customers/transactions/${customerId}`, {
         params: movieTitle ? { movieTitle } : {},
     });
     return res.data;

@@ -1,8 +1,8 @@
 ﻿import React, { useMemo, useState, useEffect } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { createPaymentRequest } from "../services/PaymentService";
-import { getServiceOrderById } from "../services/ServiceOrderService";
-import "../styles/booking-summary.css";
+import { useAuth } from "../../../hooks/useAuth";
+import { createPaymentRequest } from "../../../services/PaymentService";
+import { getServiceOrderById } from "../../../services/ServiceOrderService";
+import "../../../styles/booking-summary.css";
 
 export default function BookingSummary({ showtimeId, selectedSeats, selectedServices: selectedServicesProp }) {
     const { user } = useAuth();
@@ -13,10 +13,8 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
-    // ✅ Load services từ props hoặc localStorage
     useEffect(() => {
         const loadServiceOrder = async () => {
-            // ✅ Nếu có services từ props, dùng luôn
             if (selectedServicesProp && selectedServicesProp.length > 0) {
                 console.log("✅ Using services from props:", selectedServicesProp);
                 setSelectedServices(selectedServicesProp);
@@ -28,7 +26,6 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
                 return;
             }
 
-            // Fallback: Load từ localStorage nếu không có props
             const orderId = localStorage.getItem("currentServiceOrderId");
             
             if (!orderId) {

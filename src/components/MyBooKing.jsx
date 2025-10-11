@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { getBillsByAccount } from "../services/BillService";
-import "../styles/bill-list.css";
+import "../styles/my-booking.css";
 
 export default function MyBooking() {
   const [bills, setBills] = useState([]);
@@ -98,7 +98,6 @@ export default function MyBooking() {
     return methodMap[method] || method;
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="bill-list">
@@ -110,7 +109,6 @@ export default function MyBooking() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="bill-list">

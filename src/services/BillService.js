@@ -2,7 +2,7 @@ import api from "./api";
 
 export const createBill = async (data) => {
   try {
-    const response = await api.post("/api/bills", data);
+    const response = await api.post("/api/transactions", data);
     return response.data;
   } catch (error) {
     console.error("❌ Error creating bill:", error);
@@ -12,7 +12,7 @@ export const createBill = async (data) => {
 
 export const getBillsByAccount = async (accountId) => {
   try {
-    const response = await api.get(`/api/bills/account/${accountId}`);
+    const response = await api.get(`/api/transactions/${accountId}`);
     
     return response.data; 
   } catch (error) {

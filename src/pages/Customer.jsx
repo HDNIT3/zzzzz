@@ -1,9 +1,9 @@
 ﻿import React, { useState } from 'react';
 import { useCustomers } from '../hooks/useCustomers';
 import { getCustomerBills } from '../services/CustomerService';
-import '../styles/CustomerManagement.css';
+import '../styles/customer.css';
 
-const CustomerManagement = () => {
+export const Customer = () => {
     const {
         customers,
         loading,
@@ -41,30 +41,34 @@ const CustomerManagement = () => {
 
     return (
         <div className="customer-management">
-            <h2>Customer Management</h2>
+            <h2 className="customer-title">Customer Management</h2>
 
             {/* Filters */}
-            <div className="filters-section">
-                <div className="filter-row">
+            <div className="customer-filters-section">
+                <div className="customer-filter-row">
                     <input
                         type="text"
                         placeholder="Full Name"
+                        className="customer-input"
                         value={filters.fullName || ''}
                         onChange={(e) => handleFilterChange('fullName', e.target.value)}
                     />
                     <input
                         type="text"
                         placeholder="Email"
+                        className="customer-input"
                         value={filters.email || ''}
                         onChange={(e) => handleFilterChange('email', e.target.value)}
                     />
                     <input
                         type="text"
                         placeholder="Phone Number"
+                        className="customer-input"
                         value={filters.phoneNumber || ''}
                         onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
                     />
                     <select
+                        className="customer-select"
                         value={filters.type || ''}
                         onChange={(e) => handleFilterChange('type', e.target.value)}
                     >
@@ -72,21 +76,21 @@ const CustomerManagement = () => {
                         <option value="MEMBER">Member</option>
                         <option value="GUEST">Guest</option>
                     </select>
-                    <button onClick={handleSearch} className="search-btn">
+                    <button onClick={handleSearch} className="customer-search-btn">
                         Search Now
                     </button>
                 </div>
-                <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                <small className="customer-hint">
                     Search automatically after 0.5s or click "Search Now"
                 </small>
             </div>
 
             {/* Customer Table */}
-            <div className="table-container">
+            <div className="customer-table-container">
                 {loading ? (
-                    <div className="loading">Loading...</div>
+                    <div className="customer-loading">Loading...</div>
                 ) : customers.length === 0 ? (
-                    <div className="no-data">No customers found</div>
+                    <div className="customer-no-data">No customers found</div>
                 ) : (
                     <table className="customer-table">
                         <thead>
@@ -108,7 +112,7 @@ const CustomerManagement = () => {
                                     <td>{customer.phoneNumber}</td>
                                     <td>{customer.dateOfBirth}</td>
                                     <td>
-                                        <span className={`type-badge ${customer.type.toLowerCase()}`}>
+                                        <span className={`customer-type-badge customer-type-${customer.type.toLowerCase()}`}>
                                             {customer.type}
                                         </span>
                                     </td>
@@ -116,7 +120,7 @@ const CustomerManagement = () => {
                                     <td>
                                         <button
                                             onClick={() => handleViewBills(customer)}
-                                            className="action-btn view-bills-btn"
+                                            className="customer-action-btn customer-view-bills-btn"
                                         >
                                             View Bills
                                         </button>
@@ -129,17 +133,19 @@ const CustomerManagement = () => {
             </div>
 
             {/* Pagination */}
-            <div className="pagination">
+            <div className="customer-pagination">
                 <button
+                    className="customer-pagination-btn"
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
                     disabled={pagination.currentPage === 0 || loading}
                 >
                     Previous
                 </button>
-                <span>
+                <span className="customer-pagination-info">
                     Page {pagination.currentPage + 1} of {pagination.totalPages || 1} ({pagination.totalElements} total customers)
                 </span>
                 <button
+                    className="customer-pagination-btn"
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
                     disabled={pagination.currentPage >= pagination.totalPages - 1 || loading}
                 >
@@ -149,23 +155,24 @@ const CustomerManagement = () => {
 
             {/* Bills Modal */}
             {selectedCustomer && (
-                <div className="modal-overlay" onClick={() => setSelectedCustomer(null)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
+                <div className="customer-modal-overlay" onClick={() => setSelectedCustomer(null)}>
+                    <div className="customer-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="customer-modal-header">
                             <h3>Bills for {selectedCustomer.fullName}</h3>
                             <button
                                 onClick={() => setSelectedCustomer(null)}
-                                className="close-btn"
+                                className="customer-close-btn"
                             >
                                 ×
                             </button>
                         </div>
-                        <div className="modal-body">
+                        <div className="customer-modal-body">
                             {/* Search Filter */}
-                            <div className="movie-filter">
+                            <div className="customer-movie-filter">
                                 <input
                                     type="text"
                                     placeholder="Search by movie title..."
+                                    className="customer-input"
                                     value={movieFilter}
                                     onChange={(e) => setMovieFilter(e.target.value)}
                                     onKeyPress={(e) => {
@@ -176,7 +183,7 @@ const CustomerManagement = () => {
                                 />
                                 <button
                                     onClick={() => fetchCustomerBills(selectedCustomer.customerId, movieFilter)}
-                                    className="search-btn"
+                                    className="customer-search-btn"
                                 >
                                     Search
                                 </button>
@@ -184,14 +191,14 @@ const CustomerManagement = () => {
 
                             {/* Bills List */}
                             {billLoading ? (
-                                <div className="loading">Loading bills...</div>
+                                <div className="customer-loading">Loading bills...</div>
                             ) : customerBills.length === 0 ? (
-                                <p>No bills found for this customer.</p>
+                                <p className="customer-no-bills">No bills found for this customer.</p>
                             ) : (
-                                <div className="bills-list">
+                                <div className="customer-bills-list">
                                     {customerBills.map((bill) => (
-                                        <div key={bill.billId} className="bill-item">
-                                            <h4>{bill.movieTitle}</h4>
+                                        <div key={bill.billId} className="customer-bill-item">
+                                            <h4 className="customer-bill-movie-title">{bill.movieTitle}</h4>
                                             <p><strong>Total:</strong> ${bill.totalAmount}</p>
                                             <p><strong>Room:</strong> {bill.roomName}</p>
                                             <p><strong>Seats:</strong> {bill.seats.join(', ')}</p>
@@ -199,10 +206,10 @@ const CustomerManagement = () => {
                                             <p><strong>Payment:</strong> {bill.paymentMethod}</p>
 
                                             {bill.orderDetails?.length > 0 && (
-                                                <div className="order-details">
+                                                <div className="customer-order-details">
                                                     <strong>Services:</strong>
                                                     {bill.orderDetails.map((detail) => (
-                                                        <span key={detail.id} className="service-item">
+                                                        <span key={detail.id} className="customer-service-item">
                                                             {detail.serviceName} (x{detail.quantity}) - ${detail.price}
                                                         </span>
                                                     ))}
@@ -219,5 +226,3 @@ const CustomerManagement = () => {
         </div>
     );
 };
-
-export default CustomerManagement;

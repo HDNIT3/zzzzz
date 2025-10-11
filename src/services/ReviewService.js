@@ -39,29 +39,3 @@ export async function getReviewById(reviewId) {
     throw error;
   }
 }
-
-export async function updateReview(reviewId, reviewData) {
-  try {
-    const res = await api.put(`/api/reviews/${reviewId}`, reviewData);
-    return res.data;
-  } catch (error) {
-    console.error('Error updating review:', error);
-    if (error.response?.data?.error) {
-      throw new Error(error.response.data.error);
-    }
-    throw error;
-  }
-}
-
-export async function deleteReview(reviewId) {
-  try {
-    const res = await api.delete(`/api/reviews/${reviewId}`);
-    return res.data;
-  } catch (error) {
-    console.error('Error deleting review:', error);
-    if (error.response?.data?.error) {
-      throw new Error(error.response.data.error);
-    }
-    throw error;
-  }
-}

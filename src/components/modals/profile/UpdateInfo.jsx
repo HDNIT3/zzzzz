@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getProfile, updateBasic } from "../../../services/ProfileService";
+import { getProfile, updateProfile } from "../../../services/ProfileService";
 import "../../../styles/upload-avatar.css";
 
 export default function UpdateInfo() {
@@ -51,7 +51,7 @@ export default function UpdateInfo() {
 
     try {
       setLoading(true);
-      await updateBasic(accountId, form);
+      await updateProfile(accountId, form);
       setMsg("✅ Đã lưu!");
       setTimeout(() => navigate("/prof"), 800);
     } catch {

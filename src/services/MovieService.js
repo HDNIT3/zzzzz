@@ -21,13 +21,13 @@ export async function getUpcomingMovies() {
     return res.data;
 }
 
-export async function createMovie(movieData) {
-    const res = await api.post("/api/movies", movieData);
+export async function createMovie(payload) {
+    const res = await api.post("/api/movies", payload);
     return res.data;
 }
 
-export async function updateMovie(movieId, movieData) {
-    const res = await api.put(`/api/movies/${movieId}`, movieData);
+export async function updateMovie(movieId, payload) {
+    const res = await api.put(`/api/movies/${movieId}`, payload);
     return res.data;
 }
 
