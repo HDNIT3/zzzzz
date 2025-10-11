@@ -15,6 +15,7 @@ import { Booking } from "./pages/Booking";
 import { SelectShowtime } from "./components/ShowtimeSelect";
 import { MovieBooking } from "./pages/MovieBooking";
 import Staff from "./pages/Staff";
+import CustomerManager from "./pages/CustomerManagement";
 
 export default function App() {
     return (
@@ -41,7 +42,9 @@ export default function App() {
                 <Route path="/prof" element={<ProfileMe />} />
                 <Route path="/profile/avatar" element={<UploadAvatar />} />
                 <Route path="/profile/edit-basic" element={<UpdateInfo />} />
-                <Route path="/staff" element={<Staff />} /> 
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/cus" element={<CustomerManager />} /> 
+
             </Routes>
 
             <Footer />

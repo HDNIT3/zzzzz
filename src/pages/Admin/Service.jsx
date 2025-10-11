@@ -81,7 +81,7 @@ export default function ServiceAdmin() {
               </div>
 
               <div className="col-md-6">
-                <label className="form-label">Giá (VNĐ)</label>
+                <label className="form-label">Giá $</label>
                 <input
                   name="price"
                   type="number"
@@ -148,7 +148,7 @@ export default function ServiceAdmin() {
                   filteredServices.map((s) => (
                     <tr key={s.serviceId}>
                       <td>{s.name}</td>
-                      <td>{s.price.toLocaleString()} ₫</td>
+                      <td>{s.price.toLocaleString()} $</td>
                       <td>{s.description}</td>
                       <td className="text-center">
                         <button className="btn btn-sm btn-warning" onClick={() => handleEdit(s)}>
