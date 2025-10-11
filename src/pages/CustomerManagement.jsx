@@ -1,77 +1,31 @@
-﻿import React, { useState, useEffect } from 'react';
-import { CustomerService } from "../services/Customerservice";
+﻿import React, { useState } from 'react';
+import { useCustomers } from '../hooks/useCustomers';
+import { getCustomerBills } from '../services/CustomerService';
 import '../styles/CustomerManagement.css';
 
 const CustomerManagement = () => {
-    const [customers, setCustomers] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [billLoading, setBillLoading] = useState(false);
-    const [pagination, setPagination] = useState({
-        currentPage: 0,
-        totalPages: 0,
-        totalElements: 0,
-        size: 10
-    });
-
-    const [filters, setFilters] = useState({
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        type: ''
-    });
+    const {
+        customers,
+        loading,
+        pagination,
+        filters,
+        handleFilterChange,
+        handleSearch,
+        handlePageChange,
+    } = useCustomers();
 
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customerBills, setCustomerBills] = useState([]);
+    const [billLoading, setBillLoading] = useState(false);
     const [movieFilter, setMovieFilter] = useState('');
-
-    useEffect(() => {
-        fetchCustomers();
-    }, [pagination.currentPage, pagination.size]);
-
-    const fetchCustomers = async () => {
-        setLoading(true);
-        try {
-            const params = {
-                page: pagination.currentPage,
-                size: pagination.size,
-                ...filters
-            };
-
-            const response = await CustomerService.getAllCustomers(params);
-            setCustomers(response.content);
-            setPagination(prev => ({
-                ...prev,
-                totalPages: response.totalPages,
-                totalElements: response.totalElements
-            }));
-        } catch (error) {
-            console.error('Error fetching customers:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFilterChange = (field, value) => {
-        setFilters(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSearch = () => {
-        setPagination(prev => ({ ...prev, currentPage: 0 }));
-        fetchCustomers();
-    };
-
-    const handlePageChange = (newPage) => {
-        setPagination(prev => ({ ...prev, currentPage: newPage }));
-    };
 
     const fetchCustomerBills = async (customerId, movieTitle = '') => {
         setBillLoading(true);
         try {
-            const bills = await CustomerService.getCustomerBills(customerId, movieTitle);
-            console.log("Bills:", bills);
+            const bills = await getCustomerBills(customerId, movieTitle);
             setCustomerBills(bills || []);
         } catch (error) {
-            console.error('Error fetching customer bills:', error);
+            console.error('Error fetching bills:', error);
             setCustomerBills([]);
         } finally {
             setBillLoading(false);
@@ -82,7 +36,7 @@ const CustomerManagement = () => {
         setSelectedCustomer(customer);
         setCustomerBills([]);
         setMovieFilter('');
-        fetchCustomerBills(customer.customerId); // fetch nhưng modal mở liền
+        fetchCustomerBills(customer.customerId);
     };
 
     return (
@@ -95,37 +49,44 @@ const CustomerManagement = () => {
                     <input
                         type="text"
                         placeholder="Full Name"
-                        value={filters.fullName}
+                        value={filters.fullName || ''}
                         onChange={(e) => handleFilterChange('fullName', e.target.value)}
                     />
                     <input
                         type="text"
                         placeholder="Email"
-                        value={filters.email}
+                        value={filters.email || ''}
                         onChange={(e) => handleFilterChange('email', e.target.value)}
                     />
                     <input
                         type="text"
                         placeholder="Phone Number"
-                        value={filters.phoneNumber}
+                        value={filters.phoneNumber || ''}
                         onChange={(e) => handleFilterChange('phoneNumber', e.target.value)}
                     />
                     <select
-                        value={filters.type}
+                        value={filters.type || ''}
                         onChange={(e) => handleFilterChange('type', e.target.value)}
                     >
                         <option value="">All Types</option>
                         <option value="MEMBER">Member</option>
                         <option value="GUEST">Guest</option>
                     </select>
-                    <button onClick={handleSearch} className="search-btn">Search</button>
+                    <button onClick={handleSearch} className="search-btn">
+                        Search Now
+                    </button>
                 </div>
+                <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    Search automatically after 0.5s or click "Search Now"
+                </small>
             </div>
 
             {/* Customer Table */}
             <div className="table-container">
                 {loading ? (
                     <div className="loading">Loading...</div>
+                ) : customers.length === 0 ? (
+                    <div className="no-data">No customers found</div>
                 ) : (
                     <table className="customer-table">
                         <thead>
@@ -151,7 +112,7 @@ const CustomerManagement = () => {
                                             {customer.type}
                                         </span>
                                     </td>
-                                    <td>{customer.account?.username}</td>
+                                    <td>{customer.account?.username || 'N/A'}</td>
                                     <td>
                                         <button
                                             onClick={() => handleViewBills(customer)}
@@ -171,16 +132,16 @@ const CustomerManagement = () => {
             <div className="pagination">
                 <button
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
-                    disabled={pagination.currentPage === 0}
+                    disabled={pagination.currentPage === 0 || loading}
                 >
                     Previous
                 </button>
                 <span>
-                    Page {pagination.currentPage + 1} of {pagination.totalPages} ({pagination.totalElements} total customers)
+                    Page {pagination.currentPage + 1} of {pagination.totalPages || 1} ({pagination.totalElements} total customers)
                 </span>
                 <button
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
-                    disabled={pagination.currentPage >= pagination.totalPages - 1}
+                    disabled={pagination.currentPage >= pagination.totalPages - 1 || loading}
                 >
                     Next
                 </button>
@@ -188,8 +149,8 @@ const CustomerManagement = () => {
 
             {/* Bills Modal */}
             {selectedCustomer && (
-                <div className="modal-overlay">
-                    <div className="modal">
+                <div className="modal-overlay" onClick={() => setSelectedCustomer(null)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Bills for {selectedCustomer.fullName}</h3>
                             <button
@@ -207,6 +168,11 @@ const CustomerManagement = () => {
                                     placeholder="Search by movie title..."
                                     value={movieFilter}
                                     onChange={(e) => setMovieFilter(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            fetchCustomerBills(selectedCustomer.customerId, movieFilter);
+                                        }
+                                    }}
                                 />
                                 <button
                                     onClick={() => fetchCustomerBills(selectedCustomer.customerId, movieFilter)}
