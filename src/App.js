@@ -18,12 +18,13 @@ import Staff from "./pages/Staff";
 import { Customer } from "./pages/Customer";
 import { Operation } from "./pages/Admin/Operation";
 import EventsPromotions from './pages/EventsPromotions';
+import EventsCarousel from './components/EventsCarousel';
 
 export default function App() {
     return (
         <>
             <Header />
-
+            <EventsCarousel />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/admin/service" element={<Service />} />
