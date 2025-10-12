@@ -17,6 +17,7 @@ import { MovieBooking } from "./pages/MovieBooking";
 import Staff from "./pages/Staff";
 import { Customer } from "./pages/Customer";
 import { Operation } from "./pages/Admin/Operation";
+import EventsPromotions from './pages/EventsPromotions';
 
 export default function App() {
     return (
@@ -29,7 +30,7 @@ export default function App() {
                 <Route path="/payment-result" element={<PaymentResult />} />
                 <Route path="/bk-his" element={<MyBooKing />} />
                 <Route path="/rev" element={<UserReviews />} />
-
+                <Route path="/ev-prom" element={<EventsPromotions />} />
                 <Route path="/" element={<Home />} />
 
                 <Route path="/mov-bk" element={<MovieBooking />} />
