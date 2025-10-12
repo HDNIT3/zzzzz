@@ -1,9 +1,10 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-// Dùng axios instance chung để bảo đảm baseURL=8080 và có Bearer token interceptor
-import client from '../services/api';
+import '../styles/events.css';
 import { useAuth } from '../hooks/useAuth';
+import EventForm from '../components/EventForm';
+import client from '../services/api';
 
-function formatDate(d) {
+function fmtDate(d) {
     if (!d) return '';
     if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
     try {
@@ -25,17 +26,10 @@ export default function EventsPromotions() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState('');
+    const [banner, setBanner] = useState(null);
 
-    // Form tạo/sửa tối giản (không tách component)
-    const [creating, setCreating] = useState(false);
-    const [form, setForm] = useState({
-        name: '',
-        description: '',
-        discountPercent: 0,
-        discountStartDate: '',
-        discountEndDate: '',
-    });
-    const [editingId, setEditingId] = useState(null);
+    const [openForm, setOpenForm] = useState(false);
+    const [editing, setEditing] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -44,12 +38,12 @@ export default function EventsPromotions() {
             const res = await client.get('/api/events');
             const data = (res.data || []).map((e) => ({
                 ...e,
-                discountStartDate: formatDate(e.discountStartDate),
-                discountEndDate: formatDate(e.discountEndDate),
+                discountStartDate: fmtDate(e.discountStartDate),
+                discountEndDate: fmtDate(e.discountEndDate),
             }));
             setEvents(data);
         } catch (e) {
-            setErr(e?.response?.data?.error || e?.message || 'Failed to load events');
+            setErr(e?.response?.data?.error || e?.message || 'Tải danh sách thất bại');
         } finally {
             setLoading(false);
         }
@@ -59,181 +53,174 @@ export default function EventsPromotions() {
         load();
     }, []);
 
-    const resetForm = () => {
-        setForm({
-            name: '',
-            description: '',
-            discountPercent: 0,
-            discountStartDate: '',
-            discountEndDate: '',
-        });
+    const showBanner = (type, text) => {
+        setBanner({ type, text });
+        setTimeout(() => setBanner(null), 2800);
     };
 
-    const startCreate = () => {
-        resetForm();
-        setCreating(true);
-        setEditingId(null);
-    };
-
-    const startEdit = (e) => {
-        setForm({
-            name: e.name || '',
-            description: e.description || '',
-            discountPercent: e.discountPercent ?? 0,
-            discountStartDate: e.discountStartDate || '',
-            discountEndDate: e.discountEndDate || '',
-        });
-        setEditingId(e.eventId);
-        setCreating(true);
-    };
-
-    const submit = async () => {
+    const handleCreate = async (payload) => {
         try {
-            const payload = {
-                ...form,
-                discountStartDate: form.discountStartDate || null,
-                discountEndDate: form.discountEndDate || null,
-            };
-            if (!editingId) {
-                const res = await client.post('/api/events', payload);
-                const created = res.data;
-                setEvents((prev) => [
-                    { ...created, discountStartDate: formatDate(created.discountStartDate), discountEndDate: formatDate(created.discountEndDate) },
-                    ...prev,
-                ]);
-            } else {
-                const res = await client.put(`/api/events/${editingId}`, payload);
-                const updated = res.data;
-                setEvents((prev) =>
-                    prev.map((x) => (x.eventId === editingId
-                        ? { ...updated, discountStartDate: formatDate(updated.discountStartDate), discountEndDate: formatDate(updated.discountEndDate) }
-                        : x))
-                );
-            }
-            setCreating(false);
-            setEditingId(null);
-            resetForm();
+            const res = await client.post('/api/events', payload);
+            const created = res.data;
+            setEvents((prev) => [
+                { ...created, discountStartDate: fmtDate(created.discountStartDate), discountEndDate: fmtDate(created.discountEndDate) },
+                ...prev,
+            ]);
+            setOpenForm(false);
+            showBanner('success', 'Tạo sự kiện thành công');
         } catch (e) {
-            alert(e?.response?.data?.error || e?.message || 'Request failed');
+            const msg = e?.response?.data?.error || e?.message || 'Tạo thất bại';
+            showBanner('error', msg);
+            throw e;
         }
     };
 
-    const remove = async (id) => {
-        if (!window.confirm('Delete this event?')) return;
+    const handleUpdate = async (id, payload) => {
+        try {
+            const res = await client.put(`/api/events/${id}`, payload);
+            const updated = res.data;
+            setEvents((prev) =>
+                prev.map((x) =>
+                    x.eventId === id
+                        ? { ...updated, discountStartDate: fmtDate(updated.discountStartDate), discountEndDate: fmtDate(updated.discountEndDate) }
+                        : x
+                )
+            );
+            setEditing(null);
+            setOpenForm(false);
+            showBanner('success', 'Cập nhật sự kiện thành công');
+        } catch (e) {
+            const msg = e?.response?.data?.error || e?.message || 'Cập nhật thất bại';
+            showBanner('error', msg);
+            throw e;
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Xóa sự kiện này?')) return;
         try {
             await client.delete(`/api/events/${id}`);
             setEvents((prev) => prev.filter((x) => x.eventId !== id));
+            showBanner('success', 'Đã xóa sự kiện');
         } catch (e) {
-            alert(e?.response?.data?.error || e?.message || 'Delete failed');
+            const msg = e?.response?.data?.error || e?.message || 'Xóa thất bại';
+            showBanner('error', msg);
         }
     };
 
     return (
-        <div style={{ padding: 20 }}>
-            <h2>Events & Promotions</h2>
+        <div className="ev-page ev-dark">
+            <div className="ev-page-header">
+                <div>
+                    <h2 className="ev-title">Events & Promotions</h2>
+                    <div className="ev-subtitle">Quản lý sự kiện và chương trình khuyến mãi</div>
+                </div>
+                {canManage && (
+                    <button
+                        className="ev-btn ev-btn-primary"
+                        onClick={() => {
+                            setEditing(null);
+                            setOpenForm(true);
+                        }}
+                    >
+                        + Sự kiện mới
+                    </button>
+                )}
+            </div>
+
+            {banner ? (
+                <div className={`ev-banner ${banner.type === 'success' ? 'ev-banner-success' : 'ev-banner-error'}`}>
+                    {banner.text}
+                </div>
+            ) : null}
 
             {loading ? (
-                <div>Loading...</div>
+                <div className="ev-skeleton">
+                    <div className="ev-skeleton-line" />
+                    <div className="ev-skeleton-line" />
+                    <div className="ev-skeleton-line" />
+                </div>
             ) : err ? (
-                <div style={{ color: 'crimson' }}>{err}</div>
+                <div className="ev-alert ev-alert-error">{err}</div>
             ) : (
                 <>
-                    {canManage && (
-                        <div style={{ marginBottom: 16 }}>
-                            {!creating ? (
-                                <button onClick={startCreate}>+ New Event</button>
-                            ) : (
-                                <div style={{ border: '1px solid #eee', padding: 16, borderRadius: 8 }}>
-                                    <h3 style={{ marginTop: 0 }}>{editingId ? 'Edit Event' : 'Create Event'}</h3>
-                                    <div style={{ display: 'grid', gap: 12 }}>
-                                        <div>
-                                            <label>Name</label>
-                                            <input
-                                                type="text"
-                                                value={form.name}
-                                                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label>Description</label>
-                                            <textarea
-                                                rows={3}
-                                                value={form.description}
-                                                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label>Discount (%)</label>
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                step="0.1"
-                                                value={form.discountPercent}
-                                                onChange={(e) => setForm((f) => ({ ...f, discountPercent: Number(e.target.value || 0) }))}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 12 }}>
-                                            <div style={{ flex: 1 }}>
-                                                <label>Start date</label>
-                                                <input
-                                                    type="date"
-                                                    value={form.discountStartDate || ''}
-                                                    onChange={(e) => setForm((f) => ({ ...f, discountStartDate: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <label>End date</label>
-                                                <input
-                                                    type="date"
-                                                    value={form.discountEndDate || ''}
-                                                    onChange={(e) => setForm((f) => ({ ...f, discountEndDate: e.target.value }))}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            <button onClick={submit}>{editingId ? 'Update' : 'Create'}</button>
-                                            <button onClick={() => { setCreating(false); setEditingId(null); }} style={{ background: '#f5f5f5' }}>
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                    {openForm && (
+                        <div className="ev-card ev-card-form">
+                            <div className="ev-card-header">
+                                <div className="ev-card-title">{editing ? 'Sửa sự kiện' : 'Tạo sự kiện'}</div>
+                                <button className="ev-btn ev-btn-ghost" onClick={() => { setOpenForm(false); setEditing(null); }}>
+                                    Đóng
+                                </button>
+                            </div>
+                            <EventForm
+                                initial={editing || null}
+                                onSubmit={(payload) => (editing ? handleUpdate(editing.eventId, payload) : handleCreate(payload))}
+                                onCancel={() => { setOpenForm(false); setEditing(null); }}
+                                submitText={editing ? 'Cập nhật' : 'Tạo'}
+                            />
                         </div>
                     )}
 
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ textAlign: 'left', background: '#fafafa' }}>
-                                    <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>Name</th>
-                                    <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>Description</th>
-                                    <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>Discount</th>
-                                    <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>Start</th>
-                                    <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>End</th>
-                                    {canManage ? <th style={{ padding: 8, borderBottom: '1px solid #eee' }}>Actions</th> : null}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {events.length === 0 ? (
-                                    <tr><td colSpan={canManage ? 6 : 5} style={{ padding: 12 }}>No events</td></tr>
-                                ) : events.map((e) => (
-                                    <tr key={e.eventId}>
-                                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{e.name}</td>
-                                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{e.description || '-'}</td>
-                                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{(e.discountPercent ?? 0) + '%'}</td>
-                                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{e.discountStartDate || '-'}</td>
-                                        <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>{e.discountEndDate || '-'}</td>
-                                        {canManage ? (
-                                            <td style={{ padding: 8, borderBottom: '1px solid #f3f3f3' }}>
-                                                <button onClick={() => startEdit(e)} style={{ marginRight: 8 }}>Edit</button>
-                                                <button onClick={() => remove(e.eventId)} style={{ background: '#ffecec' }}>Delete</button>
-                                            </td>
-                                        ) : null}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="ev-card">
+                        <div className="ev-card-header">
+                            <div className="ev-card-title">Danh sách sự kiện</div>
+                            <div className="ev-meta">{events.length} sự kiện</div>
+                        </div>
+                        {events.length === 0 ? (
+                            <div className="ev-empty">Chưa có sự kiện nào</div>
+                        ) : (
+                            <div className="ev-table-wrap">
+                                <table className="ev-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tên</th>
+                                            <th>Mô tả</th>
+                                            <th>Giảm</th>
+                                            <th>Bắt đầu</th>
+                                            <th>Kết thúc</th>
+                                            {canManage ? <th style={{ width: 180 }}>Thao tác</th> : null}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {events.map((e) => {
+                                            const pct = Number(e.discountPercent ?? 0);
+                                            return (
+                                                <tr key={e.eventId}>
+                                                    <td className="ev-cell-strong">{e.name}</td>
+                                                    <td>{e.description || '—'}</td>
+                                                    <td>
+                                                        <span className={`ev-badge ${pct >= 50 ? 'ev-badge-hot' : ''}`}>
+                                                            {pct.toFixed(0)}%
+                                                        </span>
+                                                    </td>
+                                                    <td>{e.discountStartDate || '—'}</td>
+                                                    <td>{e.discountEndDate || '—'}</td>
+                                                    {canManage ? (
+                                                        <td>
+                                                            <button
+                                                                className="ev-btn ev-btn-ghost"
+                                                                onClick={() => {
+                                                                    setEditing(e);
+                                                                    setOpenForm(true);
+                                                                }}
+                                                            >
+                                                                Sửa
+                                                            </button>
+                                                            <button
+                                                                className="ev-btn ev-btn-danger"
+                                                                onClick={() => handleDelete(e.eventId)}
+                                                            >
+                                                                Xóa
+                                                            </button>
+                                                        </td>
+                                                    ) : null}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
