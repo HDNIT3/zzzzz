@@ -16,6 +16,7 @@ import { SelectShowtime } from "./components/ShowtimeSelect";
 import { MovieBooking } from "./pages/MovieBooking";
 import Staff from "./pages/Staff";
 import { Customer } from "./pages/Customer";
+import { Operation } from "./pages/Admin/Operation";
 
 export default function App() {
     return (
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="/profile/edit-basic" element={<UpdateInfo />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/cus" element={<Customer />} /> 
+                <Route path="/op" element={<Operation />} />
 
             </Routes>
 

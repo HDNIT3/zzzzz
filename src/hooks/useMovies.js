@@ -3,12 +3,12 @@ import {
   getAllMovies,
   getHotMovies,
   getUpcomingMovies,
-  createMovie,
-  updateMovie,
-  deleteMovie,
+  createMovie as createMovieAPI,
+  updateMovie as updateMovieAPI,
+  deleteMovie as deleteMovieAPI,
 } from "../services/MovieService";
 
-export function useMovies(token) {
+export function useMovies() {
   const [movies, setMovies] = useState([]);
   const [hotMovies, setHotMovies] = useState([]);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
@@ -23,6 +23,7 @@ export function useMovies(token) {
       setError(null);
     } catch (err) {
       setError(err.message);
+      console.error("Error fetching all movies:", err);
     } finally {
       setLoading(false);
     }
@@ -36,6 +37,7 @@ export function useMovies(token) {
       setError(null);
     } catch (err) {
       setError(err.message);
+      console.error("Error fetching hot movies:", err);
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,66 @@ export function useMovies(token) {
       setError(null);
     } catch (err) {
       setError(err.message);
+      console.error("Error fetching upcoming movies:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create movie với poster upload
+  const createMovie = async (movieData, posterFile) => {
+    try {
+      setLoading(true);
+      const newMovie = await createMovieAPI(movieData, posterFile);
+      
+      // Refresh danh sách movies
+      await fetchAllMovies();
+      
+      setError(null);
+      return newMovie;
+    } catch (err) {
+      setError(err.message);
+      console.error("Error creating movie:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update movie với optional poster
+  const updateMovie = async (movieId, movieData = null, posterFile = null) => {
+    try {
+      setLoading(true);
+      const updatedMovie = await updateMovieAPI(movieId, movieData, posterFile);
+      
+      // Refresh danh sách movies
+      await fetchAllMovies();
+      
+      setError(null);
+      return updatedMovie;
+    } catch (err) {
+      setError(err.message);
+      console.error("Error updating movie:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete movie
+  const deleteMovie = async (movieId) => {
+    try {
+      setLoading(true);
+      await deleteMovieAPI(movieId);
+      
+      // Refresh danh sách movies
+      await fetchAllMovies();
+      
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error deleting movie:", err);
+      throw err;
     } finally {
       setLoading(false);
     }

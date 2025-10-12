@@ -5,7 +5,6 @@ export async function getAllMovies() {
     return res.data;
 }
 
-
 export async function getMovieById(movieId) {
     const res = await api.get(`/api/movies/${movieId}`);
     return res.data;
@@ -21,13 +20,45 @@ export async function getUpcomingMovies() {
     return res.data;
 }
 
-export async function createMovie(payload) {
-    const res = await api.post("/api/movies", payload);
+export async function createMovie(movieData, posterFile) {
+    const formData = new FormData();
+    
+    const movieBlob = new Blob([JSON.stringify(movieData)], { 
+        type: 'application/json' 
+    });
+    formData.append('movie', movieBlob);
+    
+    if (posterFile) {
+        formData.append('poster', posterFile);
+    }
+    
+    const res = await api.post("/api/movies", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     return res.data;
 }
 
-export async function updateMovie(movieId, payload) {
-    const res = await api.put(`/api/movies/${movieId}`, payload);
+export async function updateMovie(movieId, movieData = null, posterFile = null) {
+    const formData = new FormData();
+    
+    if (movieData) {
+        const movieBlob = new Blob([JSON.stringify(movieData)], { 
+            type: 'application/json' 
+        });
+        formData.append('movie', movieBlob);
+    }
+
+    if (posterFile) {
+        formData.append('poster', posterFile);
+    }
+    
+    const res = await api.put(`/api/movies/${movieId}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     return res.data;
 }
 
@@ -35,5 +66,3 @@ export async function deleteMovie(movieId) {
     const res = await api.delete(`/api/movies/${movieId}`);
     return res.data;
 }
-
-
