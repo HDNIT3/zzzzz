@@ -6,7 +6,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Service from "./pages/Admin/Service";
 import PaymentResult from "./components/modals/booking/PaymentResult";
-import MyBooKing from "./components/MyBooKing";
+import MyBooKing from "./pages/MyBooKing";
 import UserReviews from "./pages/UserReviews";
 import UploadAvatar from "./components/modals/profile/UploadAvatar";
 import UpdateInfo from "./components/modals/profile/UpdateInfo";
@@ -17,6 +17,7 @@ import { MovieBooking } from "./pages/MovieBooking";
 import Staff from "./pages/Staff";
 import { Customer } from "./pages/Customer";
 import { Operation } from "./pages/Admin/Operation";
+import { Schedule } from "./pages/Schedule";
 
 export default function App() {
     return (
@@ -45,6 +46,7 @@ export default function App() {
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/cus" element={<Customer />} /> 
                 <Route path="/op" element={<Operation />} />
+                <Route path="/sched" element={<Schedule />} />
 
             </Routes>
 
