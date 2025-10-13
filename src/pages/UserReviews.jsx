@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { Star, Filter, Calendar, Film, X, Plus, Send, Search } from "lucide-react";
+import { Star, Filter, Calendar, Film, X, Plus, Send, Search, Edit2, Trash2 } from "lucide-react";
 import { useReviews } from "../hooks/useReview";
 import { useMovies } from "../hooks/useMovies";
 import { AuthContext } from "../context/AuthContext";
@@ -19,12 +19,15 @@ export default function UserReviews() {
     applyFilters,
     clearFilters,
     createNewReview,
+    updateExistingReview,
+    deleteExistingReview,
   } = useReviews();
 
   const { movies, fetchAllMovies } = useMovies();
 
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateReview, setShowCreateReview] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
@@ -58,7 +61,7 @@ export default function UserReviews() {
     const filtered = movies.filter((movie) =>
       movie.title?.toLowerCase().includes(movieSearchQuery.toLowerCase())
     );
-    setFilteredMovies(filtered.slice(0, 10)); 
+    setFilteredMovies(filtered.slice(0, 10));
   }, [movieSearchQuery, movies]);
 
   useEffect(() => {
@@ -89,6 +92,13 @@ export default function UserReviews() {
     setShowMovieDropdown(false);
   };
 
+  const resetForm = () => {
+    setNewReview({ movieId: "", movieTitle: "", content: "", rating: 5 });
+    setMovieSearchQuery("");
+    setEditingReview(null);
+    setSubmitError("");
+  };
+
   const handleCreateReview = async (e) => {
     e.preventDefault();
     setSubmitError("");
@@ -105,19 +115,53 @@ export default function UserReviews() {
     }
 
     try {
-      await createNewReview({
-        movieId: newReview.movieId,
-        content: newReview.content,
-        rating: newReview.rating,
-      });
-      setSubmitSuccess("Review created successfully!");
-      setShowCreateReview(false);
-      setNewReview({ movieId: "", movieTitle: "", content: "", rating: 5 });
-      setMovieSearchQuery("");
+      if (editingReview) {
+        await updateExistingReview(editingReview.reviewId, {
+          movieId: newReview.movieId,
+          content: newReview.content,
+          rating: newReview.rating,
+        });
+        setSubmitSuccess("Review updated successfully!");
+      } else {
+        await createNewReview({
+          movieId: newReview.movieId,
+          content: newReview.content,
+          rating: newReview.rating,
+        });
+        setSubmitSuccess("Review created successfully!");
+      }
 
+      setShowCreateReview(false);
+      resetForm();
       setTimeout(() => setSubmitSuccess(""), 3000);
     } catch (error) {
-      setSubmitError(error.message || "Failed to create review");
+      setSubmitError(error.message || "Failed to save review");
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReview(review);
+    setNewReview({
+      movieId: review.movieId,
+      movieTitle: review.movieTitle,
+      content: review.content,
+      rating: review.rating,
+    });
+    setMovieSearchQuery(review.movieTitle);
+    setShowCreateReview(true);
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) {
+      return;
+    }
+
+    try {
+      await deleteExistingReview(reviewId);
+      setSubmitSuccess("Review deleted successfully!");
+      setTimeout(() => setSubmitSuccess(""), 3000);
+    } catch (error) {
+      setSubmitError(error.message || "Failed to delete review");
     }
   };
 
@@ -175,7 +219,10 @@ export default function UserReviews() {
             <div className="user-reviews-header-actions">
               {user && (
                 <button
-                  onClick={() => setShowCreateReview(!showCreateReview)}
+                  onClick={() => {
+                    setShowCreateReview(!showCreateReview);
+                    if (showCreateReview) resetForm();
+                  }}
                   className="user-reviews-btn-create"
                 >
                   <Plus size={20} />
@@ -204,13 +251,15 @@ export default function UserReviews() {
             </div>
           )}
 
-          {/* Create Form */}
+          {/* Create/Edit Form */}
           {showCreateReview && (
             <form
               onSubmit={handleCreateReview}
               className="user-reviews-create-form"
             >
-              <h3 className="user-reviews-form-title">Create New Review</h3>
+              <h3 className="user-reviews-form-title">
+                {editingReview ? "Edit Review" : "Create New Review"}
+              </h3>
 
               {/* Movie Search */}
               <div className="user-reviews-form-group">
@@ -232,8 +281,9 @@ export default function UserReviews() {
                       placeholder="Type to search for a movie..."
                       className="user-reviews-form-input user-reviews-search-input"
                       autoComplete="off"
+                      disabled={!!editingReview}
                     />
-                    {movieSearchQuery && (
+                    {movieSearchQuery && !editingReview && (
                       <button
                         type="button"
                         onClick={() => {
@@ -253,7 +303,7 @@ export default function UserReviews() {
                   </div>
 
                   {/* Dropdown */}
-                  {showMovieDropdown && movieSearchQuery && (
+                  {showMovieDropdown && movieSearchQuery && !editingReview && (
                     <div className="user-reviews-movie-dropdown">
                       {filteredMovies.length > 0 ? (
                         filteredMovies.map((movie) => (
@@ -263,9 +313,9 @@ export default function UserReviews() {
                             className="user-reviews-movie-option"
                           >
                             <div className="user-reviews-movie-option-content">
-                              {movie.imagePortrait && (
+                              {movie.posterUrl && (
                                 <img
-                                  src={movie.imagePortrait}
+                                  src={movie.posterUrl}
                                   alt={movie.title}
                                   className="user-reviews-movie-thumbnail"
                                 />
@@ -336,20 +386,13 @@ export default function UserReviews() {
               <div className="user-reviews-form-actions">
                 <button type="submit" className="user-reviews-btn-submit">
                   <Send size={16} />
-                  Submit Review
+                  {editingReview ? "Update Review" : "Submit Review"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateReview(false);
-                    setSubmitError("");
-                    setMovieSearchQuery("");
-                    setNewReview({
-                      movieId: "",
-                      movieTitle: "",
-                      content: "",
-                      rating: 5,
-                    });
+                    resetForm();
                   }}
                   className="user-reviews-btn-cancel"
                 >
@@ -363,22 +406,6 @@ export default function UserReviews() {
           {showFilters && (
             <div className="user-reviews-filters-panel">
               <div className="user-reviews-filters-grid">
-                <div className="user-reviews-filter-item">
-                  <label className="user-reviews-filter-label">
-                    <Film size={16} className="user-reviews-label-icon" />
-                    Movie Title
-                  </label>
-                  <input
-                    type="text"
-                    value={localFilters.movieTitle}
-                    onChange={(e) =>
-                      handleLocalFilterChange("movieTitle", e.target.value)
-                    }
-                    placeholder="Search by movie title"
-                    className="user-reviews-filter-input"
-                  />
-                </div>
-
                 <div className="user-reviews-filter-item">
                   <label className="user-reviews-filter-label">
                     <Calendar size={16} className="user-reviews-label-icon" />
@@ -466,9 +493,29 @@ export default function UserReviews() {
                       </span>
                     </p>
                   </div>
-                  <span className="user-reviews-date">
-                    {formatDate(review.createdAt)}
-                  </span>
+                  <div className="user-reviews-card-actions">
+                    <span className="user-reviews-date">
+                      {formatDate(review.createdAt)}
+                    </span>
+                    {user && review.customerId === user.customerId && (
+                      <div className="user-reviews-action-buttons">
+                        <button
+                          onClick={() => handleEditReview(review)}
+                          className="user-reviews-btn-edit"
+                          title="Edit review"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReview(review.reviewId)}
+                          className="user-reviews-btn-delete"
+                          title="Delete review"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <p className="user-reviews-content">{review.content}</p>
               </div>

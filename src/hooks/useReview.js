@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { getAllReviewsByPage, createReview } from "../services/ReviewService";
+import { 
+  getAllReviewsByPage, 
+  createReview, 
+  updateReview, 
+  deleteReview 
+} from "../services/ReviewService";
 
 export const useReviews = (initialFilters = {}) => {
   const [reviews, setReviews] = useState([]);
@@ -43,6 +48,32 @@ export const useReviews = (initialFilters = {}) => {
       await fetchReviews();
       return newReview;
     } catch (err) {
+      console.error("Error creating review:", err);
+      throw err;
+    }
+  };
+
+  const updateExistingReview = async (reviewId, reviewData) => {
+    try {
+      console.log("Updating review:", reviewId, reviewData);
+      
+      const updatedReview = await updateReview(reviewId, reviewData);
+      await fetchReviews();
+      return updatedReview;
+    } catch (err) {
+      console.error("Error updating review:", err);
+      throw err;
+    }
+  };
+
+  const deleteExistingReview = async (reviewId) => {
+    try {
+      console.log("Deleting review:", reviewId);
+      
+      await deleteReview(reviewId);
+      await fetchReviews();
+    } catch (err) {
+      console.error("Error deleting review:", err);
       throw err;
     }
   };
@@ -75,6 +106,8 @@ export const useReviews = (initialFilters = {}) => {
     applyFilters,
     clearFilters,
     createNewReview,
+    updateExistingReview,
+    deleteExistingReview,
     refetch: fetchReviews,
   };
 };

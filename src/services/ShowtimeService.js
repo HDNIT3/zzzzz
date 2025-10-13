@@ -39,3 +39,35 @@ export async function getAllRooms() {
     const res = await api.get('/api/rooms');
     return res.data;
 }
+
+/**
+ * Update seat status
+ */
+export async function updateSeatStatus(seatId, status) {
+  const res = await api.put(`/api/seats/${seatId}/status`, { status });
+  return res.data;
+}
+
+/**
+ * Lock multiple seats temporarily
+ */
+export async function lockSeats(seatIds) {
+  const res = await api.post("/api/seats/lock", { seatIds });
+  return res.data;
+}
+
+/**
+ * Release locked seats
+ */
+export async function releaseSeats(seatIds) {
+  const res = await api.post("/api/seats/release", { seatIds });
+  return res.data;
+}
+
+/**
+ * Check if seats are still available
+ */
+export async function checkSeatsAvailability(seatIds) {
+  const res = await api.post("/api/seats/check-availability", { seatIds });
+  return res.data;
+}

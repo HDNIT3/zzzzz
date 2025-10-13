@@ -19,10 +19,12 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getAllMovies();
-      setMovies(data);
+      // Đảm bảo luôn trả về mảng
+      setMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
+      setMovies([]); // Set empty array on error
       console.error("Error fetching all movies:", err);
     } finally {
       setLoading(false);
@@ -33,10 +35,12 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getHotMovies();
-      setHotMovies(data);
+      // Đảm bảo luôn trả về mảng
+      setHotMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
+      setHotMovies([]); // Set empty array on error
       console.error("Error fetching hot movies:", err);
     } finally {
       setLoading(false);
@@ -47,10 +51,12 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getUpcomingMovies();
-      setUpcomingMovies(data);
+      // Đảm bảo luôn trả về mảng
+      setUpcomingMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
+      setUpcomingMovies([]); // Set empty array on error
       console.error("Error fetching upcoming movies:", err);
     } finally {
       setLoading(false);

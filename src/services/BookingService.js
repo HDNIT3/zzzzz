@@ -10,16 +10,15 @@ export async function updateSeatSelection(seatIds, status) {
   return res.data.seats;
 }
 
-export const createBooking = async (showtimeId, customerId, seatIds, serviceOrderId = null) => {
+export async function createBooking(showtimeId, customerId, seatIds, serviceOrderId = null) {
   try {
     const payload = { showtimeId, customerId, seatIds, serviceOrderId };
-
     const res = await api.post("/api/bookings", payload);
     return res.data; 
   } catch (error) {
     throw error;
   }
-};
+}
 
 export async function getShowtimeById(showtimeId) {
   const res = await api.get(`/api/showtimes/${showtimeId}`);

@@ -333,7 +333,7 @@ export function Operation() {
                       {fileSize > 0 && (
                         <div className="operation-file-info">
                           📁 {formatFileSize(fileSize)}
-                          {fileSize > 5 * 1024 * 1024 && (
+                          {fileSize > 6 * 1024 * 1024 && (
                             <span className="operation-file-warning"> ⚠️ Gần đạt giới hạn</span>
                           )}
                         </div>
@@ -386,21 +386,6 @@ export function Operation() {
                             }
                             placeholder="120"
                             min="1"
-                          />
-                        </div>
-
-                        <div className="operation-form-group">
-                          <label>Đánh Giá (0-10)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={formData.rating}
-                            onChange={(e) =>
-                              setFormData({ ...formData, rating: e.target.value })
-                            }
-                            placeholder="8.5"
-                            min="0"
-                            max="10"
                           />
                         </div>
 

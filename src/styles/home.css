@@ -40,6 +40,18 @@
   padding: 10px 0;
 }
 
+/* Static grid for few movies */
+.home-movie-carousel.static-grid {
+  overflow: visible;
+}
+
+.home-movie-carousel.static-grid .home-movie-track {
+  animation: none !important;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .home-movie-track {
   display: flex;
   gap: 25px;
@@ -62,7 +74,7 @@
 
 @keyframes homeScroll {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(calc(-100% / 3)); }
 }
 
 /* Enhanced Movie Card */

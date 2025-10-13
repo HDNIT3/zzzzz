@@ -27,6 +27,7 @@ export default function Home() {
       navigate(`/booking/${movie.movieId}`);
     }
   };
+
   const navigateBooking = () => {
     navigate("/mov-bk");
   };
@@ -34,7 +35,15 @@ export default function Home() {
   if (loading) return <p>Loading movies...</p>;
 
   const renderMovies = (movies, isUpcoming = false) => {
-    return [...movies, ...movies].map((movie, idx) => {
+    if (!movies || movies.length === 0) {
+      return null;
+    }
+
+    // If less than 4 movies, render without duplication
+    const shouldDuplicate = movies.length >= 4;
+    const moviesToRender = shouldDuplicate ? [...movies, ...movies, ...movies] : movies;
+    
+    return moviesToRender.map((movie, idx) => {
       const fileName = movie.posterUrl.split("/").pop();
       const posterSrc = posters[fileName] || movie.posterUrl;
 
@@ -57,11 +66,9 @@ export default function Home() {
             </div>
           </div>
         </div>
-
       );
     });
   };
-
 
   return (
     <div className="home-wrapper">
@@ -71,11 +78,17 @@ export default function Home() {
           <h2>🔥 Hot Movies</h2>
           <p>Movies that are currently popular</p>
         </div>
-        <div className="home-movie-carousel">
-          <div className="home-movie-track">
-            {Array.isArray(hotMovies) && renderMovies(hotMovies)}
+        {Array.isArray(hotMovies) && hotMovies.length > 0 ? (
+          <div className={`home-movie-carousel ${hotMovies.length < 4 ? 'static-grid' : ''}`}>
+            <div className="home-movie-track">
+              {renderMovies(hotMovies)}
+            </div>
           </div>
-        </div>
+        ) : (
+          <p style={{ color: '#94a3b8', textAlign: 'center', padding: '40px' }}>
+            No hot movies available at the moment
+          </p>
+        )}
       </div>
 
       {/* Upcoming movies */}
@@ -84,12 +97,17 @@ export default function Home() {
           <h2>⭐ Coming Soon</h2>
           <p>Movies that are coming soon</p>
         </div>
-        <div className="home-movie-carousel">
-          <div className="home-movie-track">
-            {Array.isArray(upcomingMovies) &&
-              renderMovies(upcomingMovies, true)}
+        {Array.isArray(upcomingMovies) && upcomingMovies.length > 0 ? (
+          <div className={`home-movie-carousel ${upcomingMovies.length < 4 ? 'static-grid' : ''}`}>
+            <div className="home-movie-track">
+              {renderMovies(upcomingMovies, true)}
+            </div>
           </div>
-        </div>
+        ) : (
+          <p style={{ color: '#94a3b8', textAlign: 'center', padding: '40px' }}>
+            No upcoming movies available at the moment
+          </p>
+        )}
       </div>
 
       {user?.role === "CUSTOMER" && (
