@@ -6,6 +6,12 @@ import {
 } from "../services/AuthService";
 import { getMessages, receiveMessage } from "../services/SupportService";
 import { useAuth } from "../hooks/useAuth";
+import step1Image1 from '../assets/images/Sup/1.png';
+import step1Image2 from '../assets/images/Sup/2.png';
+import step1Image3 from '../assets/images/Sup/3.png';
+import step1Image4 from '../assets/images/Sup/4.png';
+import step1Image5 from '../assets/images/Sup/5.png';
+import step1Image6 from '../assets/images/Sup/6.png';
 
 export default function Support() {
     const { user } = useAuth();
@@ -181,10 +187,27 @@ export default function Support() {
 
                     {/* Hướng dẫn */}
                     {activeSection === 2 && (
-                        <section className="support-section section-guide">
-                            <h2>2️⃣ Hướng dẫn</h2>
-                            <p>Đang cập nhật...</p>
-                        </section>
+                            <section className="support-section section-guide">
+                                <h2>2️⃣ Hướng dẫn Chọn phim</h2>
+                                <p>Hình ảnh minh họa bước 1 của hướng dẫn chọn phim</p>
+                                <img src={step1Image1} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                                <p>Hình ảnh minh họa bước 2 của Chọn suất Chiếu</p>
+                                <img src={step1Image2} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                                <p>Hình ảnh minh họa bước 3 của Chọn Ghế</p>
+                                <img src={step1Image3} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                                <p>Hình ảnh minh họa bước 4 Xem hóa đơn thành tiền</p>
+                                <img src={step1Image4} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                                <p>Hình ảnh minh họa bước 5 của Xem Hóa đơn</p>
+                                <img src={step1Image5} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                                <p>Hình ảnh minh họa bước 6 của Xem lịch sử booking</p>
+                                <img src={step1Image6} style={{ width: '700px', height: '400px' }} />
+                                <p></p>
+                            </section>
                     )}
 
                     {/* Chat với người khác */}
