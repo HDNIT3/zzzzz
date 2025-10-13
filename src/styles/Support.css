@@ -120,11 +120,10 @@ textarea {
     border-radius: 12px;
     border: 1px solid #ddd;
     padding: 15px;
-    height: 450px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    overflow-y: auto;
+    height: 60vh; /* linh hoạt theo màn hình, thay vì cố định 450px */
+    display: block; /* đổi từ flex sang block để không ép nội dung */
+    overflow-y: auto; /* cho phép cuộn dọc */
+    overflow-x: hidden;
     scroll-behavior: smooth;
     margin-bottom: 10px;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);

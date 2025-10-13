@@ -12,6 +12,7 @@ export default function Support() {
     const namechat = user ? user.username : "Chưa login";
     const rolechat = user ? user.role : "Guest";
 
+    const [selectedUser, setSelectedUser] = useState(null);
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -19,7 +20,6 @@ export default function Support() {
     const [message, setMessage] = useState("");
     const [activeSection, setActiveSection] = useState(null);
 
-    // phần chat
     const [chatInput, setChatInput] = useState("");
     const [messagesList, setMessagesList] = useState([]);
     const chatBoxRef = useRef(null);
@@ -31,9 +31,18 @@ export default function Support() {
         return () => clearInterval(interval);
     }, []);
 
-    // tự cuộn xuống cuối mỗi khi có tin nhắn mới
+    const [autoScroll, setAutoScroll] = useState(true);
+
+    // kiểm tra khi người dùng cuộn thủ công
+    const handleScroll = (e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+        setAutoScroll(isAtBottom);
+    };
+
+    // tự cuộn xuống cuối khi có tin nhắn mới (chỉ khi đang ở gần đáy)
     useEffect(() => {
-        if (chatBoxRef.current) {
+        if (autoScroll && chatBoxRef.current) {
             chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
         }
     }, [messagesList]);
@@ -70,8 +79,24 @@ export default function Support() {
     const handleSendChat = async (chatType) => {
         if (!chatInput.trim()) return;
 
-        const roleSend = rolechat; // CUSTOMER hoặc ADMIN
-        const role = chatType === 3 ? "CUSTOMER" : "ADMIN"; // nơi nhận
+        let roleSend = rolechat;
+        let role = "";
+
+        // Chat với người khác
+        if (chatType === 3) {
+            role = "CUSTOMER";
+        }
+
+        // Hỏi admin hoặc admin nhắn riêng
+        if (chatType === 4) {
+            if (rolechat === "ADMIN" && selectedUser) {
+                roleSend = `ADMIN-${selectedUser}`; // admin gửi riêng cho user
+                role = "ADMIN";
+            } else {
+                roleSend = rolechat;
+                role = "ADMIN";
+            }
+        }
 
         try {
             await receiveMessage(namechat, chatInput, roleSend, role);
@@ -82,6 +107,9 @@ export default function Support() {
         }
     };
 
+    // Kiểm tra role bị cấm vào tab 4
+    const isRestrictedRole = rolechat === "STAFF" || rolechat === "MANAGER";
+
     return (
         <div className="support-container">
             <h1>Trang Hỗ Trợ</h1>
@@ -91,7 +119,11 @@ export default function Support() {
                     <button onClick={() => setActiveSection(1)}>1️⃣ Quên mật khẩu</button>
                     <button onClick={() => setActiveSection(2)}>2️⃣ Hướng dẫn</button>
                     <button onClick={() => setActiveSection(3)}>3️⃣ Chat với người khác</button>
-                    <button onClick={() => setActiveSection(4)}>4️⃣ Hỏi admin</button>
+
+                    {/* Ẩn tab 4 nếu là STAFF hoặc MANAGER */}
+                    {!isRestrictedRole && (
+                        <button onClick={() => setActiveSection(4)}>4️⃣ Hỏi admin</button>
+                    )}
                 </div>
             ) : (
                 <>
@@ -103,7 +135,7 @@ export default function Support() {
                             setMessage("");
                         }}
                     >
-                        Quay lại
+                        ⬅ Quay lại
                     </button>
 
                     {/* Quên mật khẩu */}
@@ -151,7 +183,7 @@ export default function Support() {
                     {activeSection === 2 && (
                         <section className="support-section section-guide">
                             <h2>2️⃣ Hướng dẫn</h2>
-                            <p>Đang làm</p>
+                            <p>Đang cập nhật...</p>
                         </section>
                     )}
 
@@ -159,16 +191,18 @@ export default function Support() {
                     {activeSection === 3 && (
                         <section className="support-section section-chat">
                             <h2>3️⃣ Chat với người khác</h2>
-                            <div className="chat-box" ref={chatBoxRef}>
+                                <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
                                 {messagesList
-                                    .filter((m) => m.role === "CUSTOMER") // chỉ hiện chat giữa người dùng
+                                    .filter((m) => m.role === "CUSTOMER")
                                     .map((m, i) => (
                                         <div
                                             key={i}
-                                            className={`chat-message ${m.name === namechat ? "mine" : "other"
-                                                }`}
+                                            className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
                                         >
-                                            <strong>{m.name}:</strong> {m.message}
+                                            <strong>
+                                                {m.roleSend === "ADMIN" ? "Quản trị viên" : m.name}:
+                                            </strong>{" "}
+                                            {m.message}
                                         </div>
                                     ))}
                             </div>
@@ -185,30 +219,99 @@ export default function Support() {
                     )}
 
                     {/* Hỏi admin */}
-                    {activeSection === 4 && (
+                    {!isRestrictedRole && activeSection === 4 && (
                         <section className="support-section section-ask-admin">
                             <h2>4️⃣ Hỏi admin</h2>
-                            <div className="chat-box" ref={chatBoxRef}>
-                                    {messagesList
-                                        .filter((m) => m.role === "ADMIN" && m.name === namechat) // chỉ hiện chat với admin
-                                    .map((m, i) => (
-                                        <div
+
+                            {/* ADMIN XEM DANH SÁCH NGƯỜI DÙNG */}
+                            {rolechat === "ADMIN" && !selectedUser && (
+                                <div className="user-list">
+                                    <h3>Danh sách người dùng:</h3>
+                                    {Array.from(
+                                        new Set(
+                                            messagesList
+                                                .filter((m) => m.role === "ADMIN")
+                                                .map((m) => m.name)
+                                        )
+                                    ).map((username, i) => (
+                                        <button
                                             key={i}
-                                            className={`chat-message ${m.name === namechat ? "mine" : "other"
-                                                }`}
+                                            className="user-item"
+                                            onClick={() => setSelectedUser(username)}
                                         >
-                                            <strong>{m.name}:</strong> {m.message}
-                                        </div>
+                                            💬 {username}
+                                        </button>
                                     ))}
-                            </div>
-                            <div className="chat-input-area">
-                                <textarea
-                                    placeholder="Nhập câu hỏi của bạn cho admin..."
-                                    value={chatInput}
-                                    onChange={(e) => setChatInput(e.target.value)}
-                                />
-                                <button onClick={() => handleSendChat(4)}>Gửi</button>
-                            </div>
+                                </div>
+                            )}
+
+                            {/* ADMIN CHAT VỚI NGƯỜI DÙNG */}
+                            {rolechat === "ADMIN" && selectedUser && (
+                                <>
+                                    <button
+                                        className="back-button"
+                                        onClick={() => setSelectedUser(null)}
+                                    >
+                                        ⬅ Quay lại danh sách
+                                    </button>
+                                        <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+                                        {messagesList
+                                            .filter(
+                                                (m) =>
+                                                    m.role === "ADMIN" &&
+                                                    (m.name === selectedUser ||
+                                                        m.roleSend === `ADMIN-${selectedUser}`)
+                                            )
+                                            .map((m, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
+                                                >
+                                                    <strong>{m.name}:</strong> {m.message}
+                                                </div>
+                                            ))}
+                                    </div>
+                                    <div className="chat-input-area">
+                                        <textarea
+                                            placeholder={`Nhập tin nhắn cho ${selectedUser}...`}
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                        />
+                                        <button onClick={() => handleSendChat(4)}>Gửi</button>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* NGƯỜI DÙNG CHAT VỚI ADMIN */}
+                            {rolechat !== "ADMIN" && (
+                                <>
+                                    <div className="chat-box" ref={chatBoxRef}>
+                                        {messagesList
+                                            .filter(
+                                                (m) =>
+                                                    m.role === "ADMIN" &&
+                                                    (m.name === namechat ||
+                                                        m.roleSend === `ADMIN-${namechat}`)
+                                            )
+                                            .map((m, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
+                                                >
+                                                    <strong>{m.name}:</strong> {m.message}
+                                                </div>
+                                            ))}
+                                    </div>
+                                    <div className="chat-input-area">
+                                        <textarea
+                                            placeholder="Nhập câu hỏi của bạn cho admin..."
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                        />
+                                        <button onClick={() => handleSendChat(4)}>Gửi</button>
+                                    </div>
+                                </>
+                            )}
                         </section>
                     )}
                 </>
