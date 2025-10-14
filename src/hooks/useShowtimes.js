@@ -5,7 +5,8 @@ import {
   createShowtime as createShowtimeAPI,
   updateShowtime as updateShowtimeAPI,
   deleteShowtime as deleteShowtimeAPI,
-  getAllRooms as getAllRoomsAPI
+  getAllRooms as getAllRoomsAPI,
+  generateOptimalSchedule as autoScheduleAPI
 } from '../services/ShowtimeService';
 import { getMovieById } from '../services/MovieService';
 
@@ -19,12 +20,14 @@ export function useShowtimes(movieId) {
   const [error, setError] = useState(null);
   const [emptyMessage, setEmptyMessage] = useState('');
 
+  // --- Hàm tiện ích format ngày ---
   const formatDate = (date) => {
     if (!date) return '';
     const d = new Date(date);
     return d.toISOString().split('T')[0];
   };
 
+  // --- Lấy danh sách phòng ---
   useEffect(() => {
     loadRooms();
   }, []);
@@ -38,6 +41,7 @@ export function useShowtimes(movieId) {
     }
   };
 
+  // --- Lấy dữ liệu showtime khi movieId thay đổi ---
   useEffect(() => {
     fetchInitialData();
   }, [movieId]);
@@ -48,15 +52,17 @@ export function useShowtimes(movieId) {
       setError(null);
 
       if (!movieId) {
-        const showtimeData = await getAllShowtimesForNext14Days().catch(() => []);
-        const validShowtimes = Array.isArray(showtimeData) ? showtimeData : [];
-        
+        // Nếu không chọn phim => lấy tất cả showtime 14 ngày tới
+        const data = await getAllShowtimesForNext14Days().catch(() => []);
+        const validShowtimes = Array.isArray(data) ? data : [];
+
         setMovie({});
         setShowtimes(validShowtimes);
         setFilteredShowtimes(validShowtimes);
         setSelectedDate(null);
         setEmptyMessage(validShowtimes.length === 0 ? 'Chưa có suất chiếu nào trong 14 ngày tới.' : '');
       } else {
+        // Nếu chọn phim => lấy thông tin phim + 7 ngày showtime
         const [movieData, showtimeData] = await Promise.all([
           getMovieById(movieId).catch(() => ({})),
           getShowtimesForNext7Days(movieId).catch(() => [])
@@ -70,10 +76,7 @@ export function useShowtimes(movieId) {
           const todayStr = formatDate(new Date());
           setSelectedDate(todayStr);
 
-          const filtered = validShowtimes.filter(
-            (st) => formatDate(st.startTime) === todayStr
-          );
-
+          const filtered = validShowtimes.filter(st => formatDate(st.startTime) === todayStr);
           setFilteredShowtimes(filtered);
           setEmptyMessage('');
         } else {
@@ -92,14 +95,12 @@ export function useShowtimes(movieId) {
     }
   };
 
+  // --- Lọc theo ngày ---
   const handleDateSelect = (date) => {
     const dateStr = formatDate(date);
     setSelectedDate(dateStr);
 
-    const filtered = showtimes.filter(
-      (st) => formatDate(st.startTime) === dateStr
-    );
-
+    const filtered = showtimes.filter(st => formatDate(st.startTime) === dateStr);
     if (filtered.length > 0) {
       setFilteredShowtimes(filtered);
       setEmptyMessage('');
@@ -109,6 +110,7 @@ export function useShowtimes(movieId) {
     }
   };
 
+  // --- Lấy danh sách showtime theo movieId ---
   const fetchShowtimes = useCallback(async (targetMovieId) => {
     try {
       setLoading(true);
@@ -127,9 +129,7 @@ export function useShowtimes(movieId) {
         setShowtimes(validShowtimes);
 
         if (selectedDate) {
-          const filtered = validShowtimes.filter(
-            (st) => formatDate(st.startTime) === selectedDate
-          );
+          const filtered = validShowtimes.filter(st => formatDate(st.startTime) === selectedDate);
           setFilteredShowtimes(filtered);
         } else {
           setFilteredShowtimes(validShowtimes);
@@ -147,14 +147,13 @@ export function useShowtimes(movieId) {
     }
   }, [selectedDate]);
 
+  // --- CRUD Showtimes ---
   const createShowtime = useCallback(async (showtimeData) => {
     try {
       setLoading(true);
       setError(null);
       const created = await createShowtimeAPI(showtimeData);
-
       await fetchShowtimes(showtimeData.movieId || movieId);
-
       return created;
     } catch (err) {
       console.error('Error creating showtime:', err);
@@ -171,10 +170,8 @@ export function useShowtimes(movieId) {
       setLoading(true);
       setError(null);
       const updated = await updateShowtimeAPI(showtimeId, showtimeData);
-
       const id = targetMovieId || movieId;
       await fetchShowtimes(id);
-
       return updated;
     } catch (err) {
       console.error('Error updating showtime:', err);
@@ -191,7 +188,6 @@ export function useShowtimes(movieId) {
       setLoading(true);
       setError(null);
       await deleteShowtimeAPI(showtimeId);
-
       const id = targetMovieId || movieId;
       await fetchShowtimes(id);
     } catch (err) {
@@ -204,22 +200,42 @@ export function useShowtimes(movieId) {
     }
   }, [movieId, fetchShowtimes]);
 
+  // --- Lập lịch tự động (auto schedule) ---
+  const autoSchedule = useCallback(
+    async ({ roomId, date, movieIds = [], occupancyRate }) => {
+      try {
+        setLoading(true);
+        const generated = await autoScheduleAPI({ roomId, date, movieIds, occupancyRate });
+        // Refresh showtimes sau khi generate
+        await fetchShowtimes(movieId);
+        return generated;
+      } catch (err) {
+        console.error("Error generating auto schedule:", err);
+        setError("Không thể tạo lịch tự động.");
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchShowtimes, movieId]
+  );
+
   return {
     movie,
+    showtimes,
     filteredShowtimes,
+    rooms,
     selectedDate,
     loading,
     error,
     emptyMessage,
-    handleDateSelect,
     formatDate,
-
-    showtimes, 
-    rooms,
+    handleDateSelect,
     fetchShowtimes,
     createShowtime,
     updateShowtime,
     deleteShowtime,
     refreshRooms: loadRooms,
+    autoSchedule
   };
 }
