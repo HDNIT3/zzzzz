@@ -209,6 +209,7 @@ export default function MyBooking() {
               <div className="bill-footer">
                 <div className="bill-ids">
                   <small>Bill ID: {bill.billId}</small>
+                            &nbsp; | &nbsp;
                   <small>Booking ID: {bill.bookingId}</small>
                 </div>
               </div>
