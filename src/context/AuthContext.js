@@ -1,6 +1,6 @@
 ﻿import { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-import { loginRequest, sendOtpRequest, verifyOtpRequest } from "../services/AuthService";
+import { loginRequest, sendOtpRequest, verifyOtpRequest, sendForgotPasswordOtp, verifyOtpAndResetPassword } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext(null);
@@ -96,6 +96,35 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const sendForgotPassword = async (email) => {
+    try {
+      const res = await sendForgotPasswordOtp(email);
+      console.log("Forgot password OTP sent:", res);
+      return res;
+    } catch (err) {
+      console.error("Send forgot password OTP failed:", err);
+      if (err.response?.data?.errors) {
+        throw new Error(JSON.stringify(err.response.data.errors));
+      }
+      throw err;
+    }
+  };
+
+  const verifyForgotPassword = async (email, otp, newPassword) => {
+    try {
+      const res = await verifyOtpAndResetPassword(email, otp, newPassword);
+      console.log("Password reset success:", res);
+      return res;
+    } catch (err) {
+      console.error("Verify forgot password OTP failed:", err);
+      if (err.response?.data?.errors) {
+        throw new Error(JSON.stringify(err.response.data.errors));
+      }
+      throw err;
+    }
+  };
+
+
   useEffect(() => {
     const savedToken =
       localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -110,6 +139,8 @@ export function AuthProvider({ children }) {
         logout,
         sendOtp,
         verifyOtp,
+        sendForgotPassword,
+        verifyForgotPassword,
         showLogin,
         openLoginModal,
         closeLoginModal,

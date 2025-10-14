@@ -1,9 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import "../styles/Support.css";
-import {
-    sendForgotPasswordOtp,
-    verifyOtpAndResetPassword,
-} from "../services/AuthService";
 import { getMessages, receiveMessage } from "../services/SupportService";
 import { useAuth } from "../hooks/useAuth";
 import step1Image1 from '../assets/images/Sup/1.png';
@@ -12,9 +8,10 @@ import step1Image3 from '../assets/images/Sup/3.png';
 import step1Image4 from '../assets/images/Sup/4.png';
 import step1Image5 from '../assets/images/Sup/5.png';
 import step1Image6 from '../assets/images/Sup/6.png';
+import TimeTable from "../components/modals/operation/TimeTable";
 
 export default function Support() {
-    const { user } = useAuth();
+    const { user, sendForgotPasswordOtp, verifyOtpAndResetPassword } = useAuth();
     const namechat = user ? user.username : "Chưa login";
     const rolechat = user ? user.role : "Guest";
 
@@ -130,11 +127,15 @@ export default function Support() {
                     {!isRestrictedRole && (
                         <button onClick={() => setActiveSection(4)}>4️⃣ Hỏi admin</button>
                     )}
+
+                    {isRestrictedRole && (
+                        <button onClick={() => setActiveSection(5)}>5️⃣ Time Table</button>
+                    )}
                 </div>
             ) : (
                 <>
                     <button
-                        className="back-button"
+                        className="support-back-button"
                         onClick={() => {
                             setActiveSection(null);
                             setStep(1);
@@ -146,10 +147,10 @@ export default function Support() {
 
                     {/* Quên mật khẩu */}
                     {activeSection === 1 && (
-                        <section className="support-section section-forgot">
+                        <section className="support-section support-section-forgot">
                             <h2>1️⃣ Quên mật khẩu</h2>
                             {step === 1 && (
-                                <div className="forgot-step">
+                                <div className="support-forgot-step">
                                     <input
                                         type="email"
                                         placeholder="Nhập email của bạn"
@@ -160,7 +161,7 @@ export default function Support() {
                                 </div>
                             )}
                             {step === 2 && (
-                                <div className="verify-step">
+                                <div className="support-verify-step">
                                     <input
                                         type="text"
                                         placeholder="Nhập mã OTP"
@@ -177,50 +178,50 @@ export default function Support() {
                                 </div>
                             )}
                             {step === 3 && (
-                                <div className="success-step">
+                                <div className="support-success-step">
                                     <p>Mật khẩu đã được đặt lại thành công!</p>
                                 </div>
                             )}
-                            {message && <p className="message">{message}</p>}
+                            {message && <p className="support-message">{message}</p>}
                         </section>
                     )}
 
                     {/* Hướng dẫn */}
                     {activeSection === 2 && (
-                            <section className="support-section section-guide">
-                                <h2>2️⃣ Hướng dẫn Chọn phim</h2>
-                                <p>Hình ảnh minh họa bước 1 của hướng dẫn chọn phim</p>
-                                <img src={step1Image1} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                                <p>Hình ảnh minh họa bước 2 của Chọn suất Chiếu</p>
-                                <img src={step1Image2} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                                <p>Hình ảnh minh họa bước 3 của Chọn Ghế</p>
-                                <img src={step1Image3} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                                <p>Hình ảnh minh họa bước 4 Xem hóa đơn thành tiền</p>
-                                <img src={step1Image4} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                                <p>Hình ảnh minh họa bước 5 của Xem Hóa đơn</p>
-                                <img src={step1Image5} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                                <p>Hình ảnh minh họa bước 6 của Xem lịch sử booking</p>
-                                <img src={step1Image6} style={{ width: '700px', height: '400px' }} />
-                                <p></p>
-                            </section>
+                        <section className="support-section support-section-guide">
+                            <h2>2️⃣ Hướng dẫn Chọn phim</h2>
+                            <p>Hình ảnh minh họa bước 1 của hướng dẫn chọn phim</p>
+                            <img src={step1Image1} alt="Chọn phim" />
+                            <p></p>
+                            <p>Hình ảnh minh họa bước 2 của Chọn suất Chiếu</p>
+                            <img src={step1Image2} alt="Chọn suất chiếu" />
+                            <p></p>
+                            <p>Hình ảnh minh họa bước 3 của Chọn Ghế</p>
+                            <img src={step1Image3} alt="Chọn ghế" />
+                            <p></p>
+                            <p>Hình ảnh minh họa bước 4 Xem hóa đơn thành tiền</p>
+                            <img src={step1Image4} alt="Hóa đơn" />
+                            <p></p>
+                            <p>Hình ảnh minh họa bước 5 của Xem Hóa đơn</p>
+                            <img src={step1Image5} alt="Xem hóa đơn" />
+                            <p></p>
+                            <p>Hình ảnh minh họa bước 6 của Xem lịch sử booking</p>
+                            <img src={step1Image6} alt="Lịch sử booking" />
+                            <p></p>
+                        </section>
                     )}
 
                     {/* Chat với người khác */}
                     {activeSection === 3 && (
-                        <section className="support-section section-chat">
+                        <section className="support-section support-section-chat">
                             <h2>3️⃣ Chat với người khác</h2>
-                                <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+                            <div className="support-chat-box" ref={chatBoxRef} onScroll={handleScroll}>
                                 {messagesList
                                     .filter((m) => m.role === "CUSTOMER")
                                     .map((m, i) => (
                                         <div
                                             key={i}
-                                            className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
+                                            className={`support-chat-message ${m.name === namechat ? "support-mine" : "support-other"}`}
                                         >
                                             <strong>
                                                 {m.roleSend === "ADMIN" ? "Quản trị viên" : m.name}:
@@ -229,7 +230,7 @@ export default function Support() {
                                         </div>
                                     ))}
                             </div>
-                            <div className="chat-input-area">
+                            <div className="support-chat-input-area">
                                 <input
                                     type="text"
                                     placeholder="Nhập tin nhắn của bạn..."
@@ -243,12 +244,12 @@ export default function Support() {
 
                     {/* Hỏi admin */}
                     {!isRestrictedRole && activeSection === 4 && (
-                        <section className="support-section section-ask-admin">
+                        <section className="support-section support-section-ask-admin">
                             <h2>4️⃣ Hỏi admin</h2>
 
                             {/* ADMIN XEM DANH SÁCH NGƯỜI DÙNG */}
                             {rolechat === "ADMIN" && !selectedUser && (
-                                <div className="user-list">
+                                <div className="support-user-list">
                                     <h3>Danh sách người dùng:</h3>
                                     {Array.from(
                                         new Set(
@@ -259,7 +260,7 @@ export default function Support() {
                                     ).map((username, i) => (
                                         <button
                                             key={i}
-                                            className="user-item"
+                                            className="support-user-item"
                                             onClick={() => setSelectedUser(username)}
                                         >
                                             💬 {username}
@@ -272,12 +273,12 @@ export default function Support() {
                             {rolechat === "ADMIN" && selectedUser && (
                                 <>
                                     <button
-                                        className="back-button"
+                                        className="support-back-button"
                                         onClick={() => setSelectedUser(null)}
                                     >
                                         ⬅ Quay lại danh sách
                                     </button>
-                                        <div className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+                                    <div className="support-chat-box" ref={chatBoxRef} onScroll={handleScroll}>
                                         {messagesList
                                             .filter(
                                                 (m) =>
@@ -288,13 +289,13 @@ export default function Support() {
                                             .map((m, i) => (
                                                 <div
                                                     key={i}
-                                                    className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
+                                                    className={`support-chat-message ${m.name === namechat ? "support-mine" : "support-other"}`}
                                                 >
                                                     <strong>{m.name}:</strong> {m.message}
                                                 </div>
                                             ))}
                                     </div>
-                                    <div className="chat-input-area">
+                                    <div className="support-chat-input-area">
                                         <textarea
                                             placeholder={`Nhập tin nhắn cho ${selectedUser}...`}
                                             value={chatInput}
@@ -308,7 +309,7 @@ export default function Support() {
                             {/* NGƯỜI DÙNG CHAT VỚI ADMIN */}
                             {rolechat !== "ADMIN" && (
                                 <>
-                                    <div className="chat-box" ref={chatBoxRef}>
+                                    <div className="support-chat-box" ref={chatBoxRef}>
                                         {messagesList
                                             .filter(
                                                 (m) =>
@@ -319,13 +320,13 @@ export default function Support() {
                                             .map((m, i) => (
                                                 <div
                                                     key={i}
-                                                    className={`chat-message ${m.name === namechat ? "mine" : "other"}`}
+                                                    className={`support-chat-message ${m.name === namechat ? "support-mine" : "support-other"}`}
                                                 >
                                                     <strong>{m.name}:</strong> {m.message}
                                                 </div>
                                             ))}
                                     </div>
-                                    <div className="chat-input-area">
+                                    <div className="support-chat-input-area">
                                         <textarea
                                             placeholder="Nhập câu hỏi của bạn cho admin..."
                                             value={chatInput}
@@ -336,6 +337,11 @@ export default function Support() {
                                 </>
                             )}
                         </section>
+                    )}
+
+                    {/* Time Table */}
+                    {isRestrictedRole && activeSection === 5 && (
+                        <TimeTable />
                     )}
                 </>
             )}

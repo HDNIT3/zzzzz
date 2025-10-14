@@ -1,213 +1,166 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getSchedule,
-  createSchedule,
-  registerShift,
-  assignShift,
-  cancelShift,
-  autoAssignShifts,
+  createSchedule as createScheduleAPI,
+  registerShift as registerShiftAPI,
+  assignShift as assignShiftAPI,
+  cancelShift as cancelShiftAPI,
+  autoAssignShifts as autoAssignShiftsAPI,
   getCurrentMonday,
+  getCreatedWeeks,
 } from "../services/ScheduleService";
-
 export function useSchedules() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(null);
+  const [createdWeeks, setCreatedWeeks] = useState([]);
+  const [userRole, setUserRole] = useState("STAFF"); // mặc định là STAFF
 
-  // Lấy role từ storage
-  const getUserRole = useCallback(() => {
-    const role = sessionStorage.getItem("role") ||
-      localStorage.getItem("role") ||
-      "STAFF";
-    
-    // Normalize to uppercase for consistent comparison
-    return role.toUpperCase();
-  }, []);
-
-  // Lấy thứ 2 tuần hiện tại
-  const fetchCurrentMonday = useCallback(async () => {
+  // --- Fetch role (giả định role được lưu trong localStorage hoặc API)
+  useEffect(() => {
     try {
-      const monday = await getCurrentMonday();
-      setCurrentWeekStart(monday);
-      return monday;
+      const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+      if (role) setUserRole(role);
     } catch (err) {
-      console.error("Error fetching current Monday:", err);
-      // Fallback: tính toán thủ công
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() + diff);
-      const mondayStr = monday.toISOString().split("T")[0];
-      setCurrentWeekStart(mondayStr);
-      return mondayStr;
+      console.warn("Unable to load user role:", err);
     }
   }, []);
 
-  // Tải lịch làm việc
+  // --- Load current Monday & created weeks khi mở trang
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      try {
+        const [monday, weeks] = await Promise.all([
+          getCurrentMonday(),
+          getCreatedWeeks(),
+        ]);
+        setCurrentWeekStart(monday);
+        setCreatedWeeks(weeks);
+      } catch (err) {
+        console.error("Failed to initialize schedule data:", err);
+        setError(err.message || "Failed to load initial data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    initializeData();
+  }, []);
+
+  // --- Load schedule theo ngày bắt đầu (Monday)
   const loadSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
       const data = await getSchedule(startDate);
-      // Ensure data is always an array
-      setSchedules(Array.isArray(data) ? data : []);
-      return data;
+      setSchedules(data);
+      setCurrentWeekStart(startDate);
     } catch (err) {
+      console.error("Error loading schedule:", err);
       setError(err.message || "Failed to load schedule");
-      setSchedules([]); // Set empty array on error
-      throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Tạo lịch mới
-  const handleCreateSchedule = useCallback(async (startDate) => {
+  // --- Tạo schedule mới
+  const createSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await createSchedule(startDate);
-      // Ensure data is always an array
-      setSchedules(Array.isArray(data) ? data : []);
+      const data = await createScheduleAPI(startDate);
+      setSchedules(data);
+      if (!createdWeeks.includes(startDate)) {
+        setCreatedWeeks((prev) => [...prev, startDate]);
+      }
       return data;
     } catch (err) {
+      console.error("Error creating schedule:", err);
       setError(err.message || "Failed to create schedule");
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [createdWeeks]);
 
-  // Đăng ký ca (STAFF, MANAGER)
-  const handleRegisterShift = useCallback(
-    async (shiftId) => {
-      const role = getUserRole();
-      if (role !== "STAFF" && role !== "MANAGER") {
-        throw new Error("Only STAFF and MANAGER can register shifts");
-      }
+  // --- Đăng ký ca làm việc
+  const registerShift = useCallback(async (shiftId) => {
+    setLoading(true);
+    try {
+      const result = await registerShiftAPI(shiftId);
+      // Reload lại schedule sau khi đăng ký
+      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      return result;
+    } catch (err) {
+      console.error("Error registering shift:", err);
+      setError(err.message || "Failed to register for shift");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWeekStart, loadSchedule]);
 
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await registerShift(shiftId);
-        // Reload schedule
-        if (currentWeekStart) {
-          await loadSchedule(currentWeekStart);
-        }
-        return result;
-      } catch (err) {
-        setError(err.message || "Failed to register shift");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getUserRole, currentWeekStart, loadSchedule]
-  );
+  // --- Gán nhân viên vào ca
+  const assignShift = useCallback(async (employeeId, shiftId) => {
+    setLoading(true);
+    try {
+      const result = await assignShiftAPI(employeeId, shiftId);
+      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      return result;
+    } catch (err) {
+      console.error("Error assigning shift:", err);
+      setError(err.message || "Failed to assign employee");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWeekStart, loadSchedule]);
 
-  // Phân công thủ công (MANAGER only)
-  const handleAssignShift = useCallback(
-    async (employeeId, shiftId) => {
-      const role = getUserRole();
-      if (role !== "MANAGER") {
-        throw new Error("Only MANAGER can assign shifts");
-      }
+  // --- Hủy đăng ký ca
+  const cancelShift = useCallback(async (registrationId) => {
+    setLoading(true);
+    try {
+      const result = await cancelShiftAPI(registrationId);
+      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      return result;
+    } catch (err) {
+      console.error("Error canceling shift:", err);
+      setError(err.message || "Failed to cancel shift");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWeekStart, loadSchedule]);
 
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await assignShift(employeeId, shiftId);
-        // Reload schedule
-        if (currentWeekStart) {
-          await loadSchedule(currentWeekStart);
-        }
-        return result;
-      } catch (err) {
-        setError(err.message || "Failed to assign shift");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getUserRole, currentWeekStart, loadSchedule]
-  );
-
-  // Hủy đăng ký
-  const handleCancelShift = useCallback(
-    async (registrationId) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await cancelShift(registrationId);
-        // Reload schedule
-        if (currentWeekStart) {
-          await loadSchedule(currentWeekStart);
-        }
-      } catch (err) {
-        setError(err.message || "Failed to cancel shift");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [currentWeekStart, loadSchedule]
-  );
-
-  // Tự động phân công (ADMIN, MANAGER)
-  const handleAutoAssign = useCallback(
-    async (startDate = null) => {
-      const role = getUserRole();
-      if (role !== "ADMIN" && role !== "MANAGER") {
-        throw new Error("Only ADMIN and MANAGER can auto-assign shifts");
-      }
-
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await autoAssignShifts(startDate || currentWeekStart);
-        // Reload schedule
-        if (currentWeekStart) {
-          await loadSchedule(currentWeekStart);
-        }
-        return result;
-      } catch (err) {
-        setError(err.message || "Failed to auto-assign shifts");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getUserRole, currentWeekStart, loadSchedule]
-  );
-
-  // Load lịch tuần hiện tại khi mount
-  useEffect(() => {
-    fetchCurrentMonday()
-      .then((monday) => {
-        loadSchedule(monday).catch((err) => {
-          console.error("Failed to load initial schedule:", err);
-          // Don't throw, just log - component will show empty state
-        });
-      })
-      .catch((err) => {
-        console.error("Failed to fetch current Monday:", err);
-      });
-  }, [fetchCurrentMonday, loadSchedule]);
+  // --- Tự động gán ca
+  const autoAssignShifts = useCallback(async (startDate) => {
+    setLoading(true);
+    try {
+      const result = await autoAssignShiftsAPI(startDate);
+      if (startDate === currentWeekStart) await loadSchedule(startDate);
+      return result;
+    } catch (err) {
+      console.error("Error auto-assigning shifts:", err);
+      setError(err.message || "Failed to auto-assign shifts");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWeekStart, loadSchedule]);
 
   return {
     schedules,
     loading,
     error,
     currentWeekStart,
-    userRole: getUserRole(),
+    createdWeeks,
+    userRole,
     loadSchedule,
-    createSchedule: handleCreateSchedule,
-    registerShift: handleRegisterShift,
-    assignShift: handleAssignShift,
-    cancelShift: handleCancelShift,
-    autoAssignShifts: handleAutoAssign,
-    fetchCurrentMonday,
+    createSchedule,
+    registerShift,
+    assignShift,
+    cancelShift,
+    autoAssignShifts,
   };
 }
