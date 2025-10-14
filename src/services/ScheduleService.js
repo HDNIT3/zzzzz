@@ -28,11 +28,22 @@ export const createSchedule = async (startDate) => {
   return res.data;
 };
 
+// ✅ Delete a weekly schedule (by Monday start date)
+export const deleteWeek = async (startDate) => {
+  if (!startDate) throw new Error("startDate is required");
+  // Backend nên nhận DELETE với query param startDate
+  const res = await api.delete("/api/shifts/schedule", {
+    params: { startDate },
+  });
+  return res.data;
+};
+
 // Register for a shift (STAFF, MANAGER)
 export const registerShift = async (shiftId) => {
   const res = await api.post("/api/shifts/register", { shiftId });
   return res.data;
 };
+
 // Assign employee to shift (MANAGER)
 export const assignShift = async (employeeId, shiftId) => {
   const res = await api.post("/api/shifts/assign", {
@@ -41,6 +52,7 @@ export const assignShift = async (employeeId, shiftId) => {
   });
   return res.data;
 };
+
 // Cancel shift registration
 export const cancelShift = async (registrationId) => {
   const res = await api.delete(`/api/shifts/cancel/${registrationId}`);
