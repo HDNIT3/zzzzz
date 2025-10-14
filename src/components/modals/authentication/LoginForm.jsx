@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Eye, EyeOff, X } from "lucide-react";
-import "../../styles/login-form.css";
+import "../../../styles/login-form.css";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { jwtDecode } from "jwt-decode";
 

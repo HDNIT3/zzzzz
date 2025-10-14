@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User, Lock, Mail, Phone, Eye, EyeOff, X, Calendar } from "lucide-react";
-import "../../styles/register-form.css";
-import { useAuth } from "../../hooks/useAuth";
+import "../../../styles/register-form.css";
+import { useAuth } from "../../../hooks/useAuth";
 
 export function RegisterForm({ onClose, onSwitchToLogin }) {
   const { sendOtp, verifyOtp } = useAuth();

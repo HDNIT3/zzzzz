@@ -31,8 +31,12 @@ export function MovieBooking() {
   }, []);
 
   const handleBooking = (movieId) => {
-    navigate(`/booking/${movieId}`);
-  };
+    if (localStorage.getItem("role") === "CUSTOMER") {
+    navigate(`/booking/${movieId}`);      
+  } else {
+    navigate(`/pos/${movieId}`);  
+  }
+  }
   
   const movieList = Array.isArray(movies) ? movies : [];
 

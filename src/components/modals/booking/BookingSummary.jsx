@@ -2,13 +2,24 @@
 import { useAuth } from "../../../hooks/useAuth";
 import { createPaymentRequest } from "../../../services/PaymentService";
 import { getServiceOrderById } from "../../../services/ServiceOrderService";
+import { createBooking } from "../../../services/BookingService";
+import { createBill } from "../../../services/BillService";
+import PaymentMethodSelector from "./PaymentMethodSelector";
 import "../../../styles/booking-summary.css";
 
-export default function BookingSummary({ showtimeId, selectedSeats, selectedServices: selectedServicesProp }) {
+export default function BookingSummary({ 
+    showtimeId, 
+    selectedSeats, 
+    selectedServices: selectedServicesProp,
+    isCounterBooking = false,
+    cashierId = null,
+    customerPhone = null
+}) {
     const { user } = useAuth();
     const accountId = user?.accountId || null;
     const [selectedServices, setSelectedServices] = useState([]);
     const [serviceOrderId, setServiceOrderId] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('CASH');
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
@@ -70,9 +81,73 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
         [selectedServices]
     );
 
-    const totalAmount = (totalSeatPrice + totalServicePrice) * 23000;
+    const totalAmountUSD = totalSeatPrice + totalServicePrice;
+    const totalAmountVND = totalAmountUSD * 23000;
 
-    const handlePay = async () => {
+    // Xử lý thanh toán cho đặt vé tại quầy
+    const handleCounterPayment = async () => {
+        setLoading(true);
+        setMessage("");
+
+        try {
+            console.log("🏪 Processing counter booking...");
+
+            // Bước 1: Tạo Booking
+            const bookingResponse = await createBooking(
+                showtimeId,
+                null, // customerId = null for counter booking
+                selectedSeats.map(s => s.id),
+                serviceOrderId,
+                true, // isCounterBooking = true
+                cashierId,
+                customerPhone
+            );
+
+            const bookingId = bookingResponse?.bookingId || bookingResponse?.data?.bookingId;
+
+            if (!bookingId) {
+                throw new Error("Failed to get booking ID from response");
+            }
+
+            console.log("✅ Booking created:", bookingId);
+
+            // Bước 2: Tạo Bill với payment method đã chọn
+            const billPayload = {
+                bookingId: bookingId,
+                paymentMethod: paymentMethod, // CASH, CREDIT, DEBIT, MOMO
+                totalAmount: totalAmountUSD,
+                serviceOrderId: serviceOrderId || null
+            };
+
+            console.log("💰 Creating bill with payload:", billPayload);
+
+            const billResponse = await createBill(billPayload);
+            const billId = billResponse?.billId || billResponse?.data?.billId;
+
+            console.log("✅ Bill created:", billId);
+
+            // Clear localStorage
+            localStorage.removeItem("currentServiceOrderId");
+            localStorage.removeItem("currentShowtimeId");
+            localStorage.removeItem("selectedSeatIds");
+
+            setMessage(`✅ Đặt vé thành công!\nBooking ID: ${bookingId}\nBill ID: ${billId}\nPhương thức: ${paymentMethod}`);
+            
+            // Redirect sau 3 giây
+            setTimeout(() => {
+                window.location.href = "/counter-bookings";
+            }, 3000);
+
+        } catch (err) {
+            console.error("❌ Counter booking error:", err);
+            setMessage("❌ Lỗi: " + (err.response?.data?.message || err.message || "Không thể tạo booking"));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Xử lý thanh toán online (VNPay)
+    const handleOnlinePayment = async () => {
         setLoading(true);
         setMessage("");
 
@@ -80,8 +155,8 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
             const pendingBill = {
                 accountId,
                 showtimeId,
-                totalAmount: totalSeatPrice + totalServicePrice, 
-                totalAmountVND: totalAmount,
+                totalAmount: totalAmountUSD, 
+                totalAmountVND: totalAmountVND,
                 serviceOrderId: serviceOrderId || null,
                 seatIds: selectedSeats.map((s) => s.id), 
                 paymentMethod: "CREDIT",
@@ -103,17 +178,16 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
             console.log("💾 Saving pending bill:", pendingBill);
 
             localStorage.setItem("pendingBill", JSON.stringify(pendingBill));
-            
             localStorage.setItem("currentShowtimeId", showtimeId);
             localStorage.setItem("selectedSeatIds", JSON.stringify(selectedSeats.map(s => s.id)));
-            localStorage.setItem("totalAmount", (totalSeatPrice + totalServicePrice).toString());
+            localStorage.setItem("totalAmount", totalAmountUSD.toString());
             localStorage.setItem("paymentMethod", "CARD");
             
             if (serviceOrderId) {
                 localStorage.setItem("currentServiceOrderId", serviceOrderId);
             }
 
-            const data = await createPaymentRequest(totalAmount, `Booking-${accountId}-${Date.now()}`);
+            const data = await createPaymentRequest(totalAmountVND, `Booking-${accountId}-${Date.now()}`);
 
             if (data.success && data.paymentUrl) {
                 window.location.href = data.paymentUrl;
@@ -130,24 +204,23 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
         }
     };
 
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const paymentStatus = urlParams.get("vnp_ResponseCode");
-
-        if (paymentStatus === "24") { // User cancelled
-            const pendingBill = localStorage.getItem("pendingBill");
-            if (pendingBill) {
-                localStorage.removeItem("pendingBill");
-            }
-            console.log("⚠️ Payment cancelled by user");
-        }
-    }, []);
+    const handlePay = isCounterBooking ? handleCounterPayment : handleOnlinePayment;
 
     return (
         <div className="booking-summary-container">
             <div className="card shadow booking-summary-card">
                 <div className="card-body">
-                    <h2 className="text-center mb-4">🎟️ Booking Summary</h2>
+                    <h2 className="text-center mb-4">
+                        {isCounterBooking ? "🏪 Counter Booking" : "🎟️ Online Booking"}
+                    </h2>
+
+                    {/* Thông tin khách hàng (cho counter booking) */}
+                    {isCounterBooking && (
+                        <div className="alert alert-info mb-3">
+                            <strong>👤 Khách hàng:</strong> {customerPhone || "N/A"}<br/>
+                            <strong>👨‍💼 Nhân viên:</strong> {cashierId || user?.username || "N/A"}
+                        </div>
+                    )}
 
                     {/* Ghế đã chọn */}
                     <section className="booking-section">
@@ -207,10 +280,24 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
                         <p className="fw-bold text-end">Tổng dịch vụ: {totalServicePrice.toLocaleString()} $</p>
                     </section>
 
+                    {/* Phương thức thanh toán (chỉ cho counter booking) */}
+                    {isCounterBooking && (
+                        <section className="booking-section">
+                            <PaymentMethodSelector 
+                                onSelectPaymentMethod={setPaymentMethod}
+                                disabled={loading}
+                            />
+                        </section>
+                    )}
+
                     {/* Tổng cộng */}
                     <div className="border-top pt-3">
-                        <h5 className="text-end fw-bold text-primary">💵 Tổng $: {(totalSeatPrice + totalServicePrice).toLocaleString()} $</h5>
-                        <h5 className="text-end fw-bold text-success">💰 Tổng VND: {totalAmount.toLocaleString()} VND</h5>
+                        <h5 className="text-end fw-bold text-primary">
+                            💵 Tổng $: {totalAmountUSD.toLocaleString()} $
+                        </h5>
+                        <h5 className="text-end fw-bold text-success">
+                            💰 Tổng VND: {totalAmountVND.toLocaleString()} VND
+                        </h5>
                     </div>
 
                     {/* Nút thanh toán */}
@@ -225,12 +312,14 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
                                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                     Đang xử lý...
                                 </>
+                            ) : isCounterBooking ? (
+                                `💳 Xác nhận thanh toán ${paymentMethod}`
                             ) : (
                                 "💳 Thanh toán VNPay"
                             )}
                         </button>
                         {message && (
-                            <div className={`mt-3 alert ${message.includes("❌") ? "alert-danger" : "alert-info"} text-center`}>
+                            <div className={`mt-3 alert ${message.includes("❌") ? "alert-danger" : "alert-success"} text-center`} style={{whiteSpace: 'pre-line'}}>
                                 {message}
                             </div>
                         )}
@@ -239,7 +328,10 @@ export default function BookingSummary({ showtimeId, selectedSeats, selectedServ
                     {/* Thông tin bổ sung */}
                     <div className="text-center mt-3">
                         <small className="text-muted">
-                            <i className="bi bi-shield-check"></i> Thanh toán an toàn với VNPay
+                            <i className="bi bi-shield-check"></i> 
+                            {isCounterBooking 
+                                ? " Thanh toán trực tiếp tại quầy" 
+                                : " Thanh toán an toàn với VNPay"}
                         </small>
                     </div>
                 </div>

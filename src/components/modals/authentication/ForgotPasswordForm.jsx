@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { User, Mail, X, ArrowLeft } from "lucide-react";
-import "../../styles/forgot-password-form.css";;
+import "../../../styles/forgot-password-form.css";;
 
 export function ForgotPasswordForm({ onClose, onSwitchToLogin }) {
   const [formData, setFormData] = useState({

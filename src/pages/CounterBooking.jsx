@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMovieById } from "../services/MovieService";
 import OrderService from "./OrderService";
 import BookingSummary from "../components/modals/booking/BookingSummary";
 import SeatSelector from "../components/modals/booking/SeatSelector";
 import { createServiceOrder, addServiceOrderDetails, deleteServiceOrder } from "../services/ServiceOrderService";
+import { useAuth } from "../hooks/useAuth";
 import "../styles/booking.css";
 import {
     ChevronLeft,
@@ -15,7 +16,8 @@ import {
     Clock,
     Star,
     Film,
-    Shield
+    Shield,
+    User
 } from "lucide-react";
 
 const postersImport = require.context(
@@ -30,11 +32,12 @@ postersImport.keys().forEach((key) => {
     posters[fileName] = postersImport(key);
 });
 
-const TABS = ["Seats", "Services", "Payment"];
+const TABS = ["Customer", "Seats", "Services", "Payment"];
 
-export function Booking() {
+export function CounterBooking() {
     const { movieId, showtimeId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -44,19 +47,21 @@ export function Booking() {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [selectedServices, setSelectedServices] = useState([]);
     const [serviceOrderId, setServiceOrderId] = useState(null);
+    const [customerPhone, setCustomerPhone] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState("CASH");
 
+    // Fetch movie & showtime
     useEffect(() => {
         const fetchMovie = async () => {
             try {
                 setLoading(true);
-                const movieData = await getMovieById(movieId); 
+                const movieData = await getMovieById(movieId);
                 setMovie(movieData);
 
                 const st = movieData.showtimes?.find(
                     (s) => String(s.showtimeId) === String(showtimeId)
                 );
                 setShowtime(st);
-
                 setError(null);
             } catch (err) {
                 setError("Failed to load movie information. Please try again.");
@@ -69,23 +74,24 @@ export function Booking() {
     }, [movieId, showtimeId]);
 
     const handleNextTab = async () => {
-        if (activeTabIndex === 0 && selectedSeats.length === 0) {
+        if (activeTabIndex === 0 && (!customerPhone || customerPhone.length < 10)) {
+            alert("Vui lòng nhập số điện thoại khách hàng (ít nhất 10 số)!");
+            return;
+        }
+
+        if (activeTabIndex === 1 && selectedSeats.length === 0) {
             alert("Please select at least one seat!");
             return;
         }
 
-        if (activeTabIndex === 1 && selectedServices.length > 0) {
+        if (activeTabIndex === 2 && selectedServices.length > 0) {
             try {
-                const accountId = localStorage.getItem("accountId") || sessionStorage.getItem("accountId");
+                const cashierId = user?.accountId;
+                if (!cashierId) throw new Error("Cashier ID not found");
 
-                console.log("🛒 Auto-submitting services:", selectedServices);
-
-                const orderRes = await createServiceOrder(accountId);
+                const orderRes = await createServiceOrder(cashierId);
                 const orderId = orderRes.orderId || orderRes.data?.orderId;
-
-                if (!orderId) {
-                    throw new Error("Order ID not found in response");
-                }
+                if (!orderId) throw new Error("Order ID not found");
 
                 const detailsPayload = selectedServices.map(s => ({
                     serviceId: s.serviceId,
@@ -93,11 +99,8 @@ export function Booking() {
                 }));
 
                 await addServiceOrderDetails(orderId, detailsPayload);
-
                 setServiceOrderId(orderId);
                 localStorage.setItem("currentServiceOrderId", orderId);
-
-
             } catch (err) {
                 console.error("❌ Failed to auto-submit services:", err);
                 alert("❌ Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
@@ -109,47 +112,81 @@ export function Booking() {
     };
 
     const handleBackTab = async () => {
-        if (activeTabIndex === 2 && serviceOrderId) {
+        if (activeTabIndex === 3 && serviceOrderId) {
             try {
-                console.log("🗑️ Deleting service order:", serviceOrderId);
                 await deleteServiceOrder(serviceOrderId);
-
                 setServiceOrderId(null);
                 localStorage.removeItem("currentServiceOrderId");
-
-                console.log("✅ Service order deleted successfully");
-
             } catch (err) {
                 console.error("⚠️ Failed to delete service order:", err);
             }
         }
-
         setActiveTabIndex(prev => Math.max(prev - 1, 0));
     };
 
-    // ✅ Memoize callback để tránh re-render SeatSelector
+    // ✅ Memoize callbacks để tránh re-render
     const handleSelectSeats = useCallback((seats) => {
         setSelectedSeats(seats);
     }, []);
 
-    // ✅ Memoize callback cho services
     const handleUpdateServices = useCallback((services) => {
         setSelectedServices(services);
     }, []);
 
+    const handlePhoneChange = useCallback((e) => {
+        setCustomerPhone(e.target.value);
+    }, []);
+
+    // ✅ Memoize totalPrice
     const totalPrice = useMemo(() => {
         return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
     }, [selectedSeats]);
 
-    // ✅ Memoize tab content để tránh re-create
+    // ✅ Memoize tab content
     const renderTabContent = useMemo(() => {
         const currentTab = TABS[activeTabIndex];
-        
+
+        if (currentTab === "Customer") {
+            return (
+                <div className="tab-content customer-info-tab">
+                    <div className="card shadow-sm">
+                        <div className="card-body p-4">
+                            <h3 className="mb-4">👤 Thông tin khách hàng</h3>
+                            <div className="mb-3">
+                                <label htmlFor="customerPhone" className="form-label">
+                                    Số điện thoại khách hàng <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    id="customerPhone"
+                                    className="form-control form-control-lg"
+                                    placeholder="VD: 0901234567"
+                                    value={customerPhone}
+                                    onChange={handlePhoneChange}
+                                    pattern="[0-9]{10,11}"
+                                    required
+                                />
+                                <div className="form-text">
+                                    Nhập số điện thoại của khách hàng để tạo booking
+                                </div>
+                            </div>
+                            <div className="alert alert-info mt-3">
+                                <strong>👨‍💼 Nhân viên:</strong> {user?.username || user?.email || "N/A"}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         if (currentTab === "Seats") {
             return (
                 <div className="tab-content">
                     <h3>Select Seats</h3>
-                    {/* ✅ Key là showtimeId để chỉ re-mount khi showtime thay đổi */}
+                    <div className="alert alert-warning mb-3">
+                        <strong>Khách hàng:</strong> {customerPhone}
+                    </div>
+                    {/* ✅ Key để chỉ re-mount khi showtime thay đổi */}
                     <SeatSelector 
                         key={showtimeId}
                         showtimeId={showtimeId} 
@@ -162,7 +199,7 @@ export function Booking() {
                 </div>
             );
         }
-        
+
         if (currentTab === "Payment") {
             return (
                 <div className="tab-content empty payment-tab-content">
@@ -170,11 +207,14 @@ export function Booking() {
                         showtimeId={showtimeId}
                         selectedSeats={selectedSeats}
                         selectedServices={selectedServices}
+                        isCounterBooking={true}
+                        cashierId={user?.accountId}
+                        customerPhone={customerPhone}
                     />
                 </div>
             );
         }
-        
+
         return (
             <div className="tab-content empty">
                 <OrderService
@@ -183,7 +223,7 @@ export function Booking() {
                 />
             </div>
         );
-    }, [activeTabIndex, showtimeId, selectedSeats, totalPrice, selectedServices, handleSelectSeats, handleUpdateServices]);
+    }, [activeTabIndex, showtimeId, customerPhone, selectedSeats, totalPrice, selectedServices, user, handleSelectSeats, handleUpdateServices, handlePhoneChange]);
 
     if (loading) return <div className="booking-status">Loading movie information...</div>;
     if (error) return <div className="booking-status error">{error}</div>;
@@ -210,6 +250,7 @@ export function Booking() {
         <div className="booking-page">
             <div className="booking-container">
                 <div className="movie-summary">
+                    <div className="badge bg-primary mb-3">🏪 COUNTER BOOKING</div>
                     <img src={finalPosterUrl} alt={movie.title} className="summary-poster" />
                     <h2 className="summary-title">{movie.title}</h2>
                     <p className="summary-info">Cinema: CinemUTE Thu Duc</p>
@@ -218,7 +259,7 @@ export function Booking() {
                     <div className="summary-details">
                         <div className="detail-item">
                             <Film size={16} />
-                            <span>{movie.genres && movie.genres.join(", ")}</span>
+                            <span>{movie.genres?.join(", ")}</span>
                         </div>
                         <div className="detail-item">
                             <Clock size={16} />
@@ -226,13 +267,18 @@ export function Booking() {
                         </div>
                         <div className="detail-item">
                             <Star size={16} />
-                            <span>{movie.rating.toFixed(1)}/10</span>
+                            <span>{movie.rating?.toFixed(1)}/10</span>
                         </div>
                         <div className="detail-item">
                             <Shield size={16} />
                             <span>Age limit: <span className="age-rating-badge">{movie.ageRating}</span></span>
                         </div>
                     </div>
+                    {customerPhone && (
+                        <div className="alert alert-info mt-3">
+                            <strong>📱 Customer:</strong> {customerPhone}
+                        </div>
+                    )}
                     <div className="summary-total">
                         <h4>SUBTOTAL</h4>
                         <p>{totalPrice.toLocaleString()} $</p>
@@ -246,23 +292,30 @@ export function Booking() {
                             <span>Back to movie selection</span>
                         </button>
                     </div>
+
                     <div className="booking-tabs">
                         <div className={`tab-item ${activeTabIndex >= 0 ? "active" : ""}`}>
-                            <Ticket />
-                            <span>01. SELECT SEATS</span>
+                            <User />
+                            <span>01. CUSTOMER INFO</span>
                         </div>
                         <div className={`tab-item ${activeTabIndex >= 1 ? "active" : ""}`}>
-                            <Popcorn />
-                            <span>02. SELECT SERVICES</span>
+                            <Ticket />
+                            <span>02. SELECT SEATS</span>
                         </div>
                         <div className={`tab-item ${activeTabIndex >= 2 ? "active" : ""}`}>
+                            <Popcorn />
+                            <span>03. SELECT SERVICES</span>
+                        </div>
+                        <div className={`tab-item ${activeTabIndex >= 3 ? "active" : ""}`}>
                             <CreditCard />
-                            <span>03. PAYMENT</span>
+                            <span>04. PAYMENT</span>
                         </div>
                     </div>
+
                     <div className="tab-content-container">
                         {renderTabContent}
                     </div>
+
                     <div className="tab-navigation">
                         <button onClick={handleBackTab} disabled={activeTabIndex === 0}>
                             <ChevronLeft size={16} /> Back

@@ -19,18 +19,14 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     lastUpdate: s.lastUpdate,
   });
 
-  // Helper: Get couple seat pair IDs
   const getCoupleSeatIds = (seatId) => {
     const seat = seatMap[seatId];
     if (!seat || seat.type !== "pair") return [seatId];
 
-    // For couple seats, find both seats in the pair
-    // Assuming couple seats are consecutive in the same row
     const allSeatsInRow = Object.values(seatMap).filter(
       s => s.row === seat.row && s.type === "pair"
     ).sort((a, b) => a.col - b.col);
 
-    // Find the pair that contains this seat
     for (let i = 0; i < allSeatsInRow.length; i += 2) {
       const seat1 = allSeatsInRow[i];
       const seat2 = allSeatsInRow[i + 1];
@@ -43,7 +39,6 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     return [seatId];
   };
 
-  // Load seats with smart merging
   const loadSeats = async (isInitialLoad = false) => {
     if (!showtimeId) {
       setSeatMap({});
@@ -72,19 +67,14 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
           const seat = normalizeSeat(s);
           const seatId = seat.id;
           
-          // If this seat is locked by current user, keep it locked
           if (currentLockedSeats.has(seatId)) {
-            // But if server says it's occupied, someone else took it
             if (seat.status === "occupied") {
-              // Remove from our locked set
               currentLockedSeats.delete(seatId);
               newMap[seatId] = seat;
             } else {
-              // Keep our lock
               newMap[seatId] = { ...seat, status: "locked" };
             }
           } else {
-            // Use server status
             newMap[seatId] = seat;
           }
         });
@@ -106,18 +96,16 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     }
   };
 
-  // Initial load
   useEffect(() => {
     loadSeats(true);
   }, [showtimeId]);
 
-  // Auto-refresh every 5 seconds
   useEffect(() => {
     if (!showtimeId) return;
 
     intervalRef.current = setInterval(() => {
       loadSeats(false); // Silent refresh
-    }, 5000);
+    }, 1000);
 
     return () => {
       if (intervalRef.current) {
@@ -126,7 +114,6 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     };
   }, [showtimeId]);
 
-  // Cleanup: Release locked seats when component unmounts
   useEffect(() => {
     return () => {
       const lockedSeatIds = Array.from(lockedSeatsRef.current);
@@ -138,11 +125,9 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     };
   }, []);
 
-  // Handle seat selection
   const handleSelect = async (seatId) => {
     const seat = seatMap[seatId];
     
-    // Can't select occupied or maintenance seats
     if (!seat || seat.status === "occupied" || seat.status === "maintenance") {
       return;
     }
@@ -215,13 +200,11 @@ export default function SeatSelector({ showtimeId, onSelectSeats }) {
     }
   };
 
-  // Notify parent of selected seats
   useEffect(() => {
     const selectedSeats = Object.values(seatMap).filter((s) => s.status === "locked");
     onSelectSeats(selectedSeats);
   }, [seatMap, onSelectSeats]);
 
-  // Group seats by row and handle couple seats rendering
   const { grouped, rows, maxCols } = useMemo(() => {
     const g = {};
     let maxCol = 0;

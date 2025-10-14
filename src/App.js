@@ -19,6 +19,7 @@ import { Customer } from "./pages/Customer";
 import { Operation } from "./pages/Admin/Operation";
 import { Schedule } from "./pages/Schedule";
 import Support from "./pages/Support";
+import { CounterBooking } from "./pages/CounterBooking";
 
 
 export default function App() {
@@ -32,16 +33,14 @@ export default function App() {
                 <Route path="/payment-result" element={<PaymentResult />} />
                 <Route path="/bk-his" element={<MyBooKing />} />
                 <Route path="/rev" element={<UserReviews />} />
-
-                <Route path="/" element={<Home />} />
-
+                <Route path="/pos/:movieId" element={<SelectShowtime />} />
+                <Route path="/pos/:movieId/:showtimeId" element={<CounterBooking />} />
                 <Route path="/mov-bk" element={<MovieBooking />} />
                 <Route path="/booking/:movieId" element={<SelectShowtime />} />
                 <Route path="/booking/:movieId/:showtimeId" element={<Booking />} />
                 <Route path="/admin/service" element={<Service />} />
                 <Route path="/bk-his" element={<MyBooKing />} />
                 <Route path="/rev" element={<UserReviews />} />
-
                 <Route path="/prof" element={<ProfileMe />} />
                 <Route path="/profile/avatar" element={<UploadAvatar />} />
                 <Route path="/profile/edit-basic" element={<UpdateInfo />} />
@@ -50,8 +49,6 @@ export default function App() {
                 <Route path="/op" element={<Operation />} />
                 <Route path="/sched" element={<Schedule />} />
                 <Route path="/sup" element={<Support />} />
-
-
             </Routes>
 
             <Footer />

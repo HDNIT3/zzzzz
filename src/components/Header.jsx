@@ -6,8 +6,8 @@ import {
   Settings, Shield
 } from "lucide-react";
 import cinema from "../assets/cinema.png";
-import { LoginForm } from "./modals/LoginForm";
-import { RegisterForm } from "./modals/RegisterForm";
+import { LoginForm } from "./modals/authentication/LoginForm";
+import { RegisterForm } from "./modals/authentication/RegisterForm";
 import { useAuth } from "../hooks/useAuth";
 import "../styles/header.css";
 

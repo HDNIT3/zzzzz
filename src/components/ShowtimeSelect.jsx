@@ -64,7 +64,7 @@ export function SelectShowtime() {
             }
 
             const date = new Date(timeString);
-            
+
             if (isNaN(date.getTime())) {
                 console.error("Invalid date:", startTime);
                 return "Unknown time";
@@ -115,9 +115,8 @@ export function SelectShowtime() {
                         return (
                             <button
                                 key={index}
-                                className={`select-showtime-date-btn ${
-                                    selectedDate === dateStr ? "active" : ""
-                                }`}
+                                className={`select-showtime-date-btn ${selectedDate === dateStr ? "active" : ""
+                                    }`}
                                 onClick={() => handleDateSelect(date)}
                             >
                                 {formatDisplayDate(date)}
@@ -139,9 +138,15 @@ export function SelectShowtime() {
                             return (
                                 <button
                                     key={st.showtimeId}
-                                    onClick={() =>
-                                        navigate(`/booking/${movieId}/${st.showtimeId}`)
-                                    }
+                                    onClick={() => {
+                                        const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+                                        const path =
+                                            role === "STAFF"
+                                                ? `/pos/${movieId}/${st.showtimeId}` // nhân viên
+                                                : `/booking/${movieId}/${st.showtimeId}`; // khách hàng
+                                        navigate(path);
+                                    }}
+
                                     className="select-showtime-btn"
                                 >
                                     <span className="select-showtime-time">{timeDisplay}</span>
