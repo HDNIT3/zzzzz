@@ -17,11 +17,9 @@ import { MovieBooking } from "./pages/MovieBooking";
 import Staff from "./pages/Staff";
 import { Customer } from "./pages/Customer";
 import { Operation } from "./pages/Admin/Operation";
-<<<<<<< HEAD
 import { Schedule } from "./pages/Schedule";
-=======
 import Support from "./pages/Support";
->>>>>>> d58a2dfafa5b0d18dff8dc0bbbf8a1497c58706d
+
 
 export default function App() {
     return (
