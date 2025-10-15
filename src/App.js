@@ -23,7 +23,6 @@ import { CounterBooking } from "./pages/CounterBooking";
 import EventsPromotions from './pages/EventsPromotions';
 import EventsCarousel from './components/EventsCarousel';
 
-
 export default function App() {
     return (
         <>
