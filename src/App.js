@@ -20,13 +20,15 @@ import { Operation } from "./pages/Admin/Operation";
 import { Schedule } from "./pages/Schedule";
 import Support from "./pages/Support";
 import { CounterBooking } from "./pages/CounterBooking";
+import EventsPromotions from './pages/EventsPromotions';
+import EventsCarousel from './components/EventsCarousel';
 
 
 export default function App() {
     return (
         <>
             <Header />
-
+            <EventsCarousel />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/admin/service" element={<Service />} />
@@ -35,6 +37,8 @@ export default function App() {
                 <Route path="/rev" element={<UserReviews />} />
                 <Route path="/pos/:movieId" element={<SelectShowtime />} />
                 <Route path="/pos/:movieId/:showtimeId" element={<CounterBooking />} />
+                <Route path="/ev-prom" element={<EventsPromotions />} />
+                <Route path="/" element={<Home />} />
                 <Route path="/mov-bk" element={<MovieBooking />} />
                 <Route path="/booking/:movieId" element={<SelectShowtime />} />
                 <Route path="/booking/:movieId/:showtimeId" element={<Booking />} />

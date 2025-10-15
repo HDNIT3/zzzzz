@@ -1,4 +1,4 @@
-﻿/* Customer Management - Navy Theme */
+﻿﻿ /* Customer Management - Navy Theme */
 .customer-management {
     padding: 2rem;
     background: linear-gradient(135deg, #0f2847 0%, #1a3a5c 100%);
@@ -45,26 +45,26 @@
     transition: all 0.3s ease;
 }
 
-.customer-input::placeholder {
-    color: #7a9cc6;
-}
+    .customer-input::placeholder {
+        color: #7a9cc6;
+    }
 
-.customer-input:focus,
-.customer-select:focus {
-    outline: none;
-    border-color: #4a90e2;
-    background: rgba(15, 40, 71, 1);
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-}
+    .customer-input:focus,
+    .customer-select:focus {
+        outline: none;
+        border-color: #4a90e2;
+        background: rgba(15, 40, 71, 1);
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    }
 
 .customer-select {
     cursor: pointer;
 }
 
-.customer-select option {
-    background: #0f2847;
-    color: #e8eef5;
-}
+    .customer-select option {
+        background: #0f2847;
+        color: #e8eef5;
+    }
 
 .customer-search-btn {
     padding: 0.75rem 1.5rem;
@@ -78,15 +78,15 @@
     box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
 }
 
-.customer-search-btn:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
-}
+    .customer-search-btn:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+    }
 
-.customer-search-btn:active {
-    transform: translateY(0);
-}
+    .customer-search-btn:active {
+        transform: translateY(0);
+    }
 
 .customer-hint {
     color: #7a9cc6;
@@ -110,35 +110,35 @@
     border-collapse: collapse;
 }
 
-.customer-table thead {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-}
+    .customer-table thead {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    }
 
-.customer-table th {
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    color: #ffffff;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #2563eb;
-}
+    .customer-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #ffffff;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #2563eb;
+    }
 
-.customer-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-}
+    .customer-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
 
-.customer-table tbody tr:hover {
-    background: rgba(37, 99, 235, 0.1);
-    transform: scale(1.01);
-}
+        .customer-table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.1);
+            transform: scale(1.01);
+        }
 
-.customer-table td {
-    padding: 1rem;
-    color: #e8eef5;
-}
+    .customer-table td {
+        padding: 1rem;
+        color: #e8eef5;
+    }
 
 /* Type Badge */
 .customer-type-badge {
@@ -180,11 +180,11 @@
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
-.customer-view-bills-btn:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
-}
+    .customer-view-bills-btn:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    }
 
 /* Loading & No Data */
 .customer-loading,
@@ -216,16 +216,16 @@
     transition: all 0.3s ease;
 }
 
-.customer-pagination-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4);
-}
+    .customer-pagination-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(30, 64, 175, 0.4);
+    }
 
-.customer-pagination-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+    .customer-pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 
 .customer-pagination-info {
     color: #e8eef5;
@@ -252,6 +252,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -275,6 +276,7 @@
         transform: translateY(50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -290,12 +292,12 @@
     background: rgba(30, 58, 138, 0.4);
 }
 
-.customer-modal-header h3 {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
+    .customer-modal-header h3 {
+        margin: 0;
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
 
 .customer-close-btn {
     background: rgba(239, 68, 68, 0.2);
@@ -313,11 +315,11 @@
     line-height: 1;
 }
 
-.customer-close-btn:hover {
-    background: #ef4444;
-    color: white;
-    transform: rotate(90deg);
-}
+    .customer-close-btn:hover {
+        background: #ef4444;
+        color: white;
+        transform: rotate(90deg);
+    }
 
 .customer-modal-body {
     padding: 2rem;
@@ -331,9 +333,9 @@
     margin-bottom: 1.5rem;
 }
 
-.customer-movie-filter .customer-input {
-    flex: 1;
-}
+    .customer-movie-filter .customer-input {
+        flex: 1;
+    }
 
 /* Bills List */
 .customer-bills-list {
@@ -349,11 +351,11 @@
     transition: all 0.3s ease;
 }
 
-.customer-bill-item:hover {
-    background: rgba(30, 64, 175, 0.3);
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
+    .customer-bill-item:hover {
+        background: rgba(30, 64, 175, 0.3);
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
 
 .customer-bill-movie-title {
     color: #60a5fa;
@@ -379,11 +381,11 @@
     border-top: 1px solid rgba(147, 197, 253, 0.2);
 }
 
-.customer-order-details strong {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #93c5fd;
-}
+    .customer-order-details strong {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #93c5fd;
+    }
 
 .customer-service-item {
     display: inline-block;
