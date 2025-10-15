@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 
 import Header from "./components/Header";
@@ -20,6 +19,8 @@ import { Operation } from "./pages/Admin/Operation";
 import { Schedule } from "./pages/Schedule";
 import Support from "./pages/Support";
 
+// [THÊM MỚI]
+import MyShiftTimeline from "./pages/MyShiftTimeline";
 
 export default function App() {
     return (
@@ -32,9 +33,7 @@ export default function App() {
                 <Route path="/payment-result" element={<PaymentResult />} />
                 <Route path="/bk-his" element={<MyBooKing />} />
                 <Route path="/rev" element={<UserReviews />} />
-
                 <Route path="/" element={<Home />} />
-
                 <Route path="/mov-bk" element={<MovieBooking />} />
                 <Route path="/booking/:movieId" element={<SelectShowtime />} />
                 <Route path="/booking/:movieId/:showtimeId" element={<Booking />} />
@@ -51,7 +50,8 @@ export default function App() {
                 <Route path="/sched" element={<Schedule />} />
                 <Route path="/sup" element={<Support />} />
 
-
+                {/* [THÊM MỚI] Route xem timeline ca làm việc */}
+                <Route path="/my-shifts" element={<MyShiftTimeline />} />
             </Routes>
 
             <Footer />

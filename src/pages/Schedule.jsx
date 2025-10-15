@@ -3,8 +3,9 @@ import { useSchedules } from "../hooks/useSchedules";
 import { AssignStaff } from "../components/modals/operation/AssignStaff";
 import { ScheduleSidebar } from "../components/modals/operation/ScheduleSidebar";
 import "../styles/schedule.css";
+import { useNavigate } from "react-router-dom"; // <-- NEW
 
-/* ===== Toast nhỏ gọn, tự ẩn sau 4s (phù hợp phong cách UI hiện có) ===== */
+/* ===== Toast nhỏ gọn ===== */
 function InlineToast({ toast, onClose }) {
   if (!toast) return null;
   const palette = {
@@ -56,7 +57,7 @@ function InlineToast({ toast, onClose }) {
   );
 }
 
-/* ===== Modal xác nhận chuẩn style hiện có ===== */
+/* ===== Modal xác nhận ===== */
 function ConfirmModal({ open, title, message, confirmText = "Confirm", onConfirm, onCancel }) {
   if (!open) return null;
   return (
@@ -89,6 +90,38 @@ function ConfirmModal({ open, title, message, confirmText = "Confirm", onConfirm
   );
 }
 
+/* ================= NEW: helpers an toàn cho ngày/giờ ================= */
+const DATE_RE = /(\d{4}-\d{2}-\d{2})/; // bắt YYYY-MM-DD trong name
+
+function extractDateFromName(name) {
+  if (!name) return "";
+  const m = String(name).match(DATE_RE);
+  return m ? m[1] : "";
+}
+function safeWorkDate(shift) {
+  // Ưu tiên field workDate từ BE, nếu thiếu thì rút từ name
+  return shift?.workDate || extractDateFromName(shift?.name) || "";
+}
+function fmtDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr; // giữ nguyên nếu không parse được
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return `${days[d.getDay()]}, ${d.toLocaleDateString()}`;
+}
+function fmtTime(t) {
+  if (!t) return "";
+  const parts = String(t).split(":");
+  return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : t;
+}
+function isWeekendDate(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+/* ==================================================================== */
+
 export function Schedule() {
   const {
     schedules,
@@ -104,6 +137,8 @@ export function Schedule() {
     autoAssignShifts,
     deleteWeek,
   } = useSchedules();
+
+  const navigate = useNavigate(); // <-- NEW
 
   const [selectedDate, setSelectedDate] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -147,7 +182,6 @@ export function Schedule() {
     return !Number.isNaN(d.getTime()) && d.getDay() === 1;
   };
 
-  // ===== Map lỗi theo ngữ cảnh & message backend (đã bổ sung đủ case) =====
   const mapAxiosError = (err, mondayHint, action) => {
     const st = err?.response?.status;
     const rawMsg =
@@ -163,7 +197,6 @@ export function Schedule() {
     if (msg.includes("employee not found")) return "Không tìm thấy nhân viên.";
     if (msg.includes("registration not found")) return "Không tìm thấy đăng ký.";
 
-    // Các ràng buộc tự đăng ký
     if (msg.includes("weekly shift limit exceeded")) return "Bạn đã vượt quá số ca tối đa/tuần (6 ca).";
     if (msg.includes("weekly hour limit exceeded")) return "Bạn đã vượt quá 40 giờ làm việc/tuần.";
     if (msg.includes("shift time conflict")) return "Ca này trùng thời gian với ca đã đăng ký.";
@@ -185,15 +218,28 @@ export function Schedule() {
     if (st === 409) return "Tuần/Ca đã tồn tại hoặc đã đầy. Hãy tải lại và thử lựa chọn khác.";
     return "Không thể kết nối máy chủ. Vui lòng thử lại.";
   };
-  // =====================================================================
 
-  const groupedShifts = safeSchedules.reduce((acc, shift) => {
-    const date = shift.workDate;
+  /* ==================== NEW: chuẩn hoá dữ liệu theo ngày ==================== */
+  const normalized = safeSchedules.map((s) => ({
+    ...s,
+    _workDate: safeWorkDate(s), // ngày an toàn
+  }));
+
+  const groupedShifts = normalized.reduce((acc, shift) => {
+    const date = shift._workDate || "(unknown)";
     if (!acc[date]) acc[date] = [];
     acc[date].push(shift);
     return acc;
   }, {});
-  const sortedDates = Object.keys(groupedShifts).sort();
+  const sortedDates = Object.keys(groupedShifts)
+    .sort((a, b) => {
+      // sort hợp lý cả khi có "(unknown)"
+      if (a === "(unknown)" && b === "(unknown)") return 0;
+      if (a === "(unknown)") return 1;
+      if (b === "(unknown)") return -1;
+      return new Date(a) - new Date(b);
+    });
+  /* ========================================================================== */
 
   const handleLoadWeek = () => {
     if (selectedDate) {
@@ -264,7 +310,6 @@ export function Schedule() {
     }
   };
 
-  // Register with confirm modal
   const handleRegisterClick = (shiftId) => {
     setPendingShiftId(shiftId);
     setRegisterConfirmOpen(true);
@@ -281,7 +326,6 @@ export function Schedule() {
     }
   };
 
-  // Auto-assign
   const handleOpenAutoAssignModal = () => {
     setAutoAssignDate("");
     setAutoAssignConfirmOpen(false);
@@ -308,7 +352,6 @@ export function Schedule() {
     }
   };
 
-  // Assign employee handler
   const handleAssignEmployee = async (employeeId, shiftId) => {
     try {
       await assignShift(employeeId, shiftId);
@@ -323,19 +366,6 @@ export function Schedule() {
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(""), 3000);
-  };
-
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    if (Number.isNaN(date.getTime())) return dateStr || "";
-    return `${days[date.getDay()]}, ${date.toLocaleDateString()}`;
-  };
-
-  const isWeekend = (dateStr) => {
-    const date = new Date(dateStr);
-    const day = date.getDay();
-    return day === 0 || day === 6;
   };
 
   return (
@@ -407,6 +437,18 @@ export function Schedule() {
                 🤖 Auto Assign Shifts
               </button>
             )}
+
+            {/* NEW: Chỉ STAFF được xem nút View timeline */}
+            {userRole === "STAFF" && (
+              <button
+                className="shift-schedule-btn shift-schedule-btn-secondary"
+                onClick={() => navigate("/my-shifts")}
+                title="Xem timeline ca đã đăng ký của tôi"
+                style={{ marginLeft: 8 }}
+              >
+                👀 View timeline
+              </button>
+            )}
           </div>
 
           {successMessage && <div className="shift-schedule-success-message">{successMessage}</div>}
@@ -418,7 +460,7 @@ export function Schedule() {
             <div className="shift-schedule-loading-spinner"></div>
             <p>Loading schedule...</p>
           </div>
-        ) : safeSchedules.length === 0 ? (
+        ) : normalized.length === 0 ? (
           <div className="shift-schedule-empty-state">
             <div className="shift-schedule-empty-state-icon">📅</div>
             <h2>No schedule found</h2>
@@ -426,29 +468,29 @@ export function Schedule() {
           </div>
         ) : (
           <div className="shift-schedule-grid">
-            {sortedDates.map((date) => (
-              <div key={date} className="shift-schedule-day-section">
+            {sortedDates.map((dateKey) => (
+              <div key={dateKey} className="shift-schedule-day-section">
                 <div className="shift-schedule-day-header">
                   <div>
-                    <h2 className="shift-schedule-day-title">{formatDate(date)}</h2>
-                    <p className="shift-schedule-day-date">{date}</p>
+                    <h2 className="shift-schedule-day-title">{fmtDate(dateKey) || "(unknown date)"}</h2>
+                    <p className="shift-schedule-day-date">{dateKey || ""}</p>
                   </div>
-                  {isWeekend(date) && <span className="shift-schedule-weekend-badge">Weekend</span>}
+                  {dateKey && isWeekendDate(dateKey) && <span className="shift-schedule-weekend-badge">Weekend</span>}
                 </div>
 
                 <div className="shift-schedule-shifts-list">
-                  {groupedShifts[date].map((shift) => (
+                  {groupedShifts[dateKey].map((shift) => (
                     <div key={shift.shiftId} className="shift-schedule-shift-card">
                       <div className="shift-schedule-shift-header">
                         <div>
                           <h3 className="shift-schedule-shift-name">{shift.name}</h3>
                           <p className="shift-schedule-shift-time">
-                            ⏰ {shift.startTime} - {shift.endTime}
+                            ⏰ {fmtTime(shift.startTime)} - {fmtTime(shift.endTime)}
                           </p>
                           <p className="shift-schedule-shift-details">📋 {shift.note || "No additional notes"}</p>
                         </div>
-                        <span className={`shift-schedule-shift-status ${shift.shiftStatus.toLowerCase()}`}>
-                          {shift.shiftStatus}
+                        <span className={`shift-schedule-shift-status ${String(shift.shiftStatus || "").toLowerCase()}`}>
+                          {shift.shiftStatus || "UNKNOWN"}
                         </span>
                       </div>
 
