@@ -4,6 +4,7 @@ import { getMovieById } from "../services/MovieService";
 import OrderService from "./OrderService";
 import BookingSummary from "../components/modals/booking/BookingSummary";
 import SeatSelector from "../components/modals/booking/SeatSelector";
+import PromotionSelector from "../components/PromotionSelector";
 import { createServiceOrder, addServiceOrderDetails, deleteServiceOrder } from "../services/ServiceOrderService";
 import { useAuth } from "../hooks/useAuth";
 import "../styles/booking.css";
@@ -32,7 +33,8 @@ postersImport.keys().forEach((key) => {
     posters[fileName] = postersImport(key);
 });
 
-const TABS = ["Customer", "Seats", "Services", "Payment"];
+// Thêm Promotion tab
+const TABS = ["Customer", "Seats", "Services", "Promotion", "Payment"];
 
 export function CounterBooking() {
     const { movieId, showtimeId } = useParams();
@@ -49,6 +51,10 @@ export function CounterBooking() {
     const [serviceOrderId, setServiceOrderId] = useState(null);
     const [customerPhone, setCustomerPhone] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("CASH");
+
+    // Promotion selection
+    const [selectedEventId, setSelectedEventId] = useState(null);
+    const [discountPercent, setDiscountPercent] = useState(0);
 
     // Fetch movie & showtime
     useEffect(() => {
@@ -84,6 +90,7 @@ export function CounterBooking() {
             return;
         }
 
+        // Submit services khi rời tab Services
         if (activeTabIndex === 2 && selectedServices.length > 0) {
             try {
                 const cashierId = user?.accountId;
@@ -112,7 +119,8 @@ export function CounterBooking() {
     };
 
     const handleBackTab = async () => {
-        if (activeTabIndex === 3 && serviceOrderId) {
+        // Payment index là 4 sau khi thêm Promotion
+        if (activeTabIndex === 4 && serviceOrderId) {
             try {
                 await deleteServiceOrder(serviceOrderId);
                 setServiceOrderId(null);
@@ -124,7 +132,7 @@ export function CounterBooking() {
         setActiveTabIndex(prev => Math.max(prev - 1, 0));
     };
 
-    // ✅ Memoize callbacks để tránh re-render
+    // ✅ Memoize callbacks
     const handleSelectSeats = useCallback((seats) => {
         setSelectedSeats(seats);
     }, []);
@@ -135,6 +143,11 @@ export function CounterBooking() {
 
     const handlePhoneChange = useCallback((e) => {
         setCustomerPhone(e.target.value);
+    }, []);
+
+    const handlePromotionChange = useCallback((eventId, percent) => {
+        setSelectedEventId(eventId || null);
+        setDiscountPercent(percent || 0);
     }, []);
 
     // ✅ Memoize totalPrice
@@ -186,11 +199,10 @@ export function CounterBooking() {
                     <div className="alert alert-warning mb-3">
                         <strong>Khách hàng:</strong> {customerPhone}
                     </div>
-                    {/* ✅ Key để chỉ re-mount khi showtime thay đổi */}
-                    <SeatSelector 
+                    <SeatSelector
                         key={showtimeId}
-                        showtimeId={showtimeId} 
-                        onSelectSeats={handleSelectSeats} 
+                        showtimeId={showtimeId}
+                        onSelectSeats={handleSelectSeats}
                     />
                     <div className="seat-summary">
                         <p>Selected seats: {selectedSeats.length}</p>
@@ -200,30 +212,59 @@ export function CounterBooking() {
             );
         }
 
-        if (currentTab === "Payment") {
+        if (currentTab === "Services") {
             return (
-                <div className="tab-content empty payment-tab-content">
-                    <BookingSummary
-                        showtimeId={showtimeId}
-                        selectedSeats={selectedSeats}
+                <div className="tab-content empty">
+                    <OrderService
                         selectedServices={selectedServices}
-                        isCounterBooking={true}
-                        cashierId={user?.accountId}
-                        customerPhone={customerPhone}
+                        onUpdateSelectedServices={handleUpdateServices}
                     />
                 </div>
             );
         }
 
+        if (currentTab === "Promotion") {
+            return (
+                <div className="tab-content">
+                    <PromotionSelector
+                        selectedEventId={selectedEventId}
+                        onChange={handlePromotionChange}
+                    />
+                </div>
+            );
+        }
+
+        // Payment
         return (
-            <div className="tab-content empty">
-                <OrderService
+            <div className="tab-content empty payment-tab-content">
+                <BookingSummary
+                    showtimeId={showtimeId}
+                    selectedSeats={selectedSeats}
                     selectedServices={selectedServices}
-                    onUpdateSelectedServices={handleUpdateServices}
+                    isCounterBooking={true}
+                    cashierId={user?.accountId}
+                    customerPhone={customerPhone}
+                    // Promotions
+                    selectedEventId={selectedEventId}
+                    discountPercent={discountPercent}
                 />
             </div>
         );
-    }, [activeTabIndex, showtimeId, customerPhone, selectedSeats, totalPrice, selectedServices, user, handleSelectSeats, handleUpdateServices, handlePhoneChange]);
+    }, [
+        activeTabIndex,
+        showtimeId,
+        customerPhone,
+        selectedSeats,
+        selectedServices,
+        user,
+        selectedEventId,
+        discountPercent,
+        totalPrice,
+        handleSelectSeats,
+        handleUpdateServices,
+        handlePhoneChange,
+        handlePromotionChange
+    ]);
 
     if (loading) return <div className="booking-status">Loading movie information...</div>;
     if (error) return <div className="booking-status error">{error}</div>;
@@ -307,8 +348,12 @@ export function CounterBooking() {
                             <span>03. SELECT SERVICES</span>
                         </div>
                         <div className={`tab-item ${activeTabIndex >= 3 ? "active" : ""}`}>
+                            <Ticket />
+                            <span>04. PROMOTION</span>
+                        </div>
+                        <div className={`tab-item ${activeTabIndex >= 4 ? "active" : ""}`}>
                             <CreditCard />
-                            <span>04. PAYMENT</span>
+                            <span>05. PAYMENT</span>
                         </div>
                     </div>
 

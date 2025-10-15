@@ -4,6 +4,7 @@ import { getMovieById } from "../services/MovieService";
 import OrderService from "./OrderService";
 import BookingSummary from "../components/modals/booking/BookingSummary";
 import SeatSelector from "../components/modals/booking/SeatSelector";
+import PromotionSelector from "../components/PromotionSelector";
 import { createServiceOrder, addServiceOrderDetails, deleteServiceOrder } from "../services/ServiceOrderService";
 import "../styles/booking.css";
 import {
@@ -30,7 +31,8 @@ postersImport.keys().forEach((key) => {
     posters[fileName] = postersImport(key);
 });
 
-const TABS = ["Seats", "Services", "Payment"];
+// Thêm tab Promotion, tách riêng chọn khuyến mãi
+const TABS = ["Seats", "Services", "Promotion", "Payment"];
 
 export function Booking() {
     const { movieId, showtimeId } = useParams();
@@ -45,11 +47,15 @@ export function Booking() {
     const [selectedServices, setSelectedServices] = useState([]);
     const [serviceOrderId, setServiceOrderId] = useState(null);
 
+    // Promotion selection
+    const [selectedEventId, setSelectedEventId] = useState(null);
+    const [discountPercent, setDiscountPercent] = useState(0);
+
     useEffect(() => {
         const fetchMovie = async () => {
             try {
                 setLoading(true);
-                const movieData = await getMovieById(movieId); 
+                const movieData = await getMovieById(movieId);
                 setMovie(movieData);
 
                 const st = movieData.showtimes?.find(
@@ -74,11 +80,10 @@ export function Booking() {
             return;
         }
 
+        // Tự tạo service order khi rời tab Services
         if (activeTabIndex === 1 && selectedServices.length > 0) {
             try {
                 const accountId = localStorage.getItem("accountId") || sessionStorage.getItem("accountId");
-
-                console.log("🛒 Auto-submitting services:", selectedServices);
 
                 const orderRes = await createServiceOrder(accountId);
                 const orderId = orderRes.orderId || orderRes.data?.orderId;
@@ -97,7 +102,6 @@ export function Booking() {
                 setServiceOrderId(orderId);
                 localStorage.setItem("currentServiceOrderId", orderId);
 
-
             } catch (err) {
                 console.error("❌ Failed to auto-submit services:", err);
                 alert("❌ Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
@@ -109,51 +113,47 @@ export function Booking() {
     };
 
     const handleBackTab = async () => {
-        if (activeTabIndex === 2 && serviceOrderId) {
+        // Nếu đang ở tab Payment (index 3) và có serviceOrder, xóa khi quay lại
+        if (activeTabIndex === 3 && serviceOrderId) {
             try {
-                console.log("🗑️ Deleting service order:", serviceOrderId);
                 await deleteServiceOrder(serviceOrderId);
-
                 setServiceOrderId(null);
                 localStorage.removeItem("currentServiceOrderId");
-
-                console.log("✅ Service order deleted successfully");
-
             } catch (err) {
                 console.error("⚠️ Failed to delete service order:", err);
             }
         }
-
         setActiveTabIndex(prev => Math.max(prev - 1, 0));
     };
 
-    // ✅ Memoize callback để tránh re-render SeatSelector
     const handleSelectSeats = useCallback((seats) => {
         setSelectedSeats(seats);
     }, []);
 
-    // ✅ Memoize callback cho services
     const handleUpdateServices = useCallback((services) => {
         setSelectedServices(services);
+    }, []);
+
+    const handlePromotionChange = useCallback((eventId, percent) => {
+        setSelectedEventId(eventId || null);
+        setDiscountPercent(percent || 0);
     }, []);
 
     const totalPrice = useMemo(() => {
         return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
     }, [selectedSeats]);
 
-    // ✅ Memoize tab content để tránh re-create
     const renderTabContent = useMemo(() => {
         const currentTab = TABS[activeTabIndex];
-        
+
         if (currentTab === "Seats") {
             return (
                 <div className="tab-content">
                     <h3>Select Seats</h3>
-                    {/* ✅ Key là showtimeId để chỉ re-mount khi showtime thay đổi */}
-                    <SeatSelector 
+                    <SeatSelector
                         key={showtimeId}
-                        showtimeId={showtimeId} 
-                        onSelectSeats={handleSelectSeats} 
+                        showtimeId={showtimeId}
+                        onSelectSeats={handleSelectSeats}
                     />
                     <div className="seat-summary">
                         <p>Selected seats: {selectedSeats.length}</p>
@@ -162,28 +162,54 @@ export function Booking() {
                 </div>
             );
         }
-        
-        if (currentTab === "Payment") {
+
+        if (currentTab === "Services") {
             return (
-                <div className="tab-content empty payment-tab-content">
-                    <BookingSummary
-                        showtimeId={showtimeId}
-                        selectedSeats={selectedSeats}
+                <div className="tab-content empty">
+                    <OrderService
                         selectedServices={selectedServices}
+                        onUpdateSelectedServices={handleUpdateServices}
                     />
                 </div>
             );
         }
-        
+
+        if (currentTab === "Promotion") {
+            return (
+                <div className="tab-content">
+                    <PromotionSelector
+                        selectedEventId={selectedEventId}
+                        onChange={handlePromotionChange}
+                    />
+                </div>
+            );
+        }
+
+        // Payment
         return (
-            <div className="tab-content empty">
-                <OrderService
+            <div className="tab-content empty payment-tab-content">
+                <BookingSummary
+                    showtimeId={showtimeId}
+                    selectedSeats={selectedSeats}
                     selectedServices={selectedServices}
-                    onUpdateSelectedServices={handleUpdateServices}
+                    // Promotions passed to summary
+                    selectedEventId={selectedEventId}
+                    discountPercent={discountPercent}
                 />
             </div>
         );
-    }, [activeTabIndex, showtimeId, selectedSeats, totalPrice, selectedServices, handleSelectSeats, handleUpdateServices]);
+    }, [
+        activeTabIndex,
+        showtimeId,
+        selectedSeats,
+        selectedServices,
+        selectedEventId,
+        discountPercent,
+        totalPrice,
+        handleSelectSeats,
+        handleUpdateServices,
+        handlePromotionChange
+    ]);
 
     if (loading) return <div className="booking-status">Loading movie information...</div>;
     if (error) return <div className="booking-status error">{error}</div>;
@@ -256,8 +282,12 @@ export function Booking() {
                             <span>02. SELECT SERVICES</span>
                         </div>
                         <div className={`tab-item ${activeTabIndex >= 2 ? "active" : ""}`}>
+                            <Ticket />
+                            <span>03. PROMOTION</span>
+                        </div>
+                        <div className={`tab-item ${activeTabIndex >= 3 ? "active" : ""}`}>
                             <CreditCard />
-                            <span>03. PAYMENT</span>
+                            <span>04. PAYMENT</span>
                         </div>
                     </div>
                     <div className="tab-content-container">

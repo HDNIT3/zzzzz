@@ -7,13 +7,16 @@ import { createBill } from "../../../services/BillService";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import "../../../styles/booking-summary.css";
 
-export default function BookingSummary({ 
-    showtimeId, 
-    selectedSeats, 
+export default function BookingSummary({
+    showtimeId,
+    selectedSeats,
     selectedServices: selectedServicesProp,
     isCounterBooking = false,
     cashierId = null,
-    customerPhone = null
+    customerPhone = null,
+    // Promotions passed in từ tab Promotion
+    selectedEventId = null,
+    discountPercent = 0
 }) {
     const { user } = useAuth();
     const accountId = user?.accountId || null;
@@ -27,9 +30,8 @@ export default function BookingSummary({
     useEffect(() => {
         const loadServiceOrder = async () => {
             if (selectedServicesProp && selectedServicesProp.length > 0) {
-                console.log("✅ Using services from props:", selectedServicesProp);
                 setSelectedServices(selectedServicesProp);
-                
+
                 const orderId = localStorage.getItem("currentServiceOrderId");
                 if (orderId) {
                     setServiceOrderId(orderId);
@@ -38,17 +40,10 @@ export default function BookingSummary({
             }
 
             const orderId = localStorage.getItem("currentServiceOrderId");
-            
-            if (!orderId) {
-                console.log("⚠️ No service order found");
-                return;
-            }
+            if (!orderId) return;
 
             try {
-                console.log("📦 Loading service order from API:", orderId);
                 const orderData = await getServiceOrderById(orderId);
-                console.log("✅ Service order data:", orderData);
-
                 if (orderData.orderDetails && orderData.orderDetails.length > 0) {
                     const services = orderData.orderDetails.map(detail => ({
                         serviceId: detail.service.serviceId,
@@ -56,12 +51,9 @@ export default function BookingSummary({
                         price: detail.price,
                         quantity: detail.quantity
                     }));
-                    
+
                     setSelectedServices(services);
                     setServiceOrderId(orderId);
-                    console.log("✅ Services loaded from API:", services);
-                } else {
-                    console.log("⚠️ No services in order");
                 }
             } catch (error) {
                 console.error("❌ Failed to load service order:", error);
@@ -84,15 +76,28 @@ export default function BookingSummary({
     const totalAmountUSD = totalSeatPrice + totalServicePrice;
     const totalAmountVND = totalAmountUSD * 23000;
 
-    // Xử lý thanh toán cho đặt vé tại quầy
+    // Tính sau khuyến mãi (BE vẫn tính lại)
+    const safePercent = Math.max(0, Math.min(100, Number(discountPercent) || 0));
+    const finalAmountUSD = useMemo(() => {
+        return Math.round(totalAmountUSD * (1 - safePercent / 100) * 100) / 100;
+    }, [totalAmountUSD, safePercent]);
+
+    const finalAmountVND = useMemo(() => {
+        return Math.round(finalAmountUSD * 23000);
+    }, [finalAmountUSD]);
+
+    const normalizePaymentMethod = (m) => {
+        if (m === "CASH") return "CASH";
+        if (m === "CREDIT") return "CREDIT";
+        return "CASH";
+    };
+
+    // Counter booking flow
     const handleCounterPayment = async () => {
         setLoading(true);
         setMessage("");
 
         try {
-            console.log("🏪 Processing counter booking...");
-
-            // Bước 1: Tạo Booking
             const bookingResponse = await createBooking(
                 showtimeId,
                 null, // customerId = null for counter booking
@@ -104,36 +109,35 @@ export default function BookingSummary({
             );
 
             const bookingId = bookingResponse?.bookingId || bookingResponse?.data?.bookingId;
-
             if (!bookingId) {
                 throw new Error("Failed to get booking ID from response");
             }
 
-            console.log("✅ Booking created:", bookingId);
-
-            // Bước 2: Tạo Bill với payment method đã chọn
             const billPayload = {
                 bookingId: bookingId,
-                paymentMethod: paymentMethod, // CASH, CREDIT, DEBIT, MOMO
-                totalAmount: totalAmountUSD,
-                serviceOrderId: serviceOrderId || null
+                paymentMethod: normalizePaymentMethod(paymentMethod),
+                totalAmount: finalAmountUSD,
+                serviceOrderId: serviceOrderId || null,
+                eventId: selectedEventId || null,
+                discountPercent: safePercent || null
             };
-
-            console.log("💰 Creating bill with payload:", billPayload);
 
             const billResponse = await createBill(billPayload);
             const billId = billResponse?.billId || billResponse?.data?.billId;
-
-            console.log("✅ Bill created:", billId);
 
             // Clear localStorage
             localStorage.removeItem("currentServiceOrderId");
             localStorage.removeItem("currentShowtimeId");
             localStorage.removeItem("selectedSeatIds");
 
-            setMessage(`✅ Đặt vé thành công!\nBooking ID: ${bookingId}\nBill ID: ${billId}\nPhương thức: ${paymentMethod}`);
-            
-            // Redirect sau 3 giây
+            setMessage(
+                `✅ Đặt vé thành công!
+Booking ID: ${bookingId}
+Bill ID: ${billId}
+Phương thức: ${normalizePaymentMethod(paymentMethod)}${selectedEventId ? `\nKhuyến mãi: -${safePercent}%` : ""
+                }`
+            );
+
             setTimeout(() => {
                 window.location.href = "/counter-bookings";
             }, 3000);
@@ -146,7 +150,7 @@ export default function BookingSummary({
         }
     };
 
-    // Xử lý thanh toán online (VNPay)
+    // Online payment (VNPay) flow
     const handleOnlinePayment = async () => {
         setLoading(true);
         setMessage("");
@@ -155,11 +159,13 @@ export default function BookingSummary({
             const pendingBill = {
                 accountId,
                 showtimeId,
-                totalAmount: totalAmountUSD, 
-                totalAmountVND: totalAmountVND,
+                totalAmount: finalAmountUSD,
+                totalAmountVND: finalAmountVND,
                 serviceOrderId: serviceOrderId || null,
-                seatIds: selectedSeats.map((s) => s.id), 
+                seatIds: selectedSeats.map((s) => s.id),
                 paymentMethod: "CREDIT",
+                eventId: selectedEventId || null,
+                discountPercent: safePercent || null,
                 selectedSeats: selectedSeats.map(s => ({
                     id: s.id,
                     row: s.row,
@@ -175,19 +181,19 @@ export default function BookingSummary({
                 }))
             };
 
-            console.log("💾 Saving pending bill:", pendingBill);
-
             localStorage.setItem("pendingBill", JSON.stringify(pendingBill));
             localStorage.setItem("currentShowtimeId", showtimeId);
             localStorage.setItem("selectedSeatIds", JSON.stringify(selectedSeats.map(s => s.id)));
-            localStorage.setItem("totalAmount", totalAmountUSD.toString());
+            localStorage.setItem("totalAmount", String(finalAmountUSD));
             localStorage.setItem("paymentMethod", "CARD");
-            
             if (serviceOrderId) {
                 localStorage.setItem("currentServiceOrderId", serviceOrderId);
             }
 
-            const data = await createPaymentRequest(totalAmountVND, `Booking-${accountId}-${Date.now()}`);
+            const data = await createPaymentRequest(
+                finalAmountVND,
+                `Booking-${accountId}-${Date.now()}`
+            );
 
             if (data.success && data.paymentUrl) {
                 window.location.href = data.paymentUrl;
@@ -217,7 +223,7 @@ export default function BookingSummary({
                     {/* Thông tin khách hàng (cho counter booking) */}
                     {isCounterBooking && (
                         <div className="alert alert-info mb-3">
-                            <strong>👤 Khách hàng:</strong> {customerPhone || "N/A"}<br/>
+                            <strong>👤 Khách hàng:</strong> {customerPhone || "N/A"}<br />
                             <strong>👨‍💼 Nhân viên:</strong> {cashierId || user?.username || "N/A"}
                         </div>
                     )}
@@ -280,25 +286,41 @@ export default function BookingSummary({
                         <p className="fw-bold text-end">Tổng dịch vụ: {totalServicePrice.toLocaleString()} $</p>
                     </section>
 
+                    {/* Tổng cộng (hiển thị sau ưu đãi nếu có) */}
+                    <div className="border-top pt-3">
+                        {safePercent > 0 ? (
+                            <>
+                                <h6 className="text-end text-muted">
+                                    Tạm tính: {totalAmountUSD.toLocaleString()} $ ({totalAmountVND.toLocaleString()} VND)
+                                </h6>
+                                <h5 className="text-end fw-bold text-primary">
+                                    💵 Sau ưu đãi: {finalAmountUSD.toLocaleString()} $
+                                </h5>
+                                <h5 className="text-end fw-bold text-success">
+                                    💰 Sau ưu đãi (VND): {finalAmountVND.toLocaleString()} VND
+                                </h5>
+                            </>
+                        ) : (
+                            <>
+                                <h5 className="text-end fw-bold text-primary">
+                                    💵 Tổng $: {totalAmountUSD.toLocaleString()} $
+                                </h5>
+                                <h5 className="text-end fw-bold text-success">
+                                    💰 Tổng VND: {totalAmountVND.toLocaleString()} VND
+                                </h5>
+                            </>
+                        )}
+                    </div>
+
                     {/* Phương thức thanh toán (chỉ cho counter booking) */}
                     {isCounterBooking && (
                         <section className="booking-section">
-                            <PaymentMethodSelector 
+                            <PaymentMethodSelector
                                 onSelectPaymentMethod={setPaymentMethod}
                                 disabled={loading}
                             />
                         </section>
                     )}
-
-                    {/* Tổng cộng */}
-                    <div className="border-top pt-3">
-                        <h5 className="text-end fw-bold text-primary">
-                            💵 Tổng $: {totalAmountUSD.toLocaleString()} $
-                        </h5>
-                        <h5 className="text-end fw-bold text-success">
-                            💰 Tổng VND: {totalAmountVND.toLocaleString()} VND
-                        </h5>
-                    </div>
 
                     {/* Nút thanh toán */}
                     <div className="text-center mt-4">
@@ -313,13 +335,13 @@ export default function BookingSummary({
                                     Đang xử lý...
                                 </>
                             ) : isCounterBooking ? (
-                                `💳 Xác nhận thanh toán ${paymentMethod}`
+                                `💳 Xác nhận thanh toán ${normalizePaymentMethod(paymentMethod)}`
                             ) : (
                                 "💳 Thanh toán VNPay"
                             )}
                         </button>
                         {message && (
-                            <div className={`mt-3 alert ${message.includes("❌") ? "alert-danger" : "alert-success"} text-center`} style={{whiteSpace: 'pre-line'}}>
+                            <div className={`mt-3 alert ${message.includes("❌") ? "alert-danger" : "alert-success"} text-center`} style={{ whiteSpace: 'pre-line' }}>
                                 {message}
                             </div>
                         )}
@@ -328,9 +350,9 @@ export default function BookingSummary({
                     {/* Thông tin bổ sung */}
                     <div className="text-center mt-3">
                         <small className="text-muted">
-                            <i className="bi bi-shield-check"></i> 
-                            {isCounterBooking 
-                                ? " Thanh toán trực tiếp tại quầy" 
+                            <i className="bi bi-shield-check"></i>
+                            {isCounterBooking
+                                ? " Thanh toán trực tiếp tại quầy"
                                 : " Thanh toán an toàn với VNPay"}
                         </small>
                     </div>
