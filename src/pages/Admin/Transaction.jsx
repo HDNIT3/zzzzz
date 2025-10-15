@@ -3,11 +3,11 @@ import { searchBillsByCustomerInfo } from "../../services/TransactionService";
 import { useAuth } from "../../hooks/useAuth";
 import * as XLSX from "xlsx-js-style";
 import "../../styles/Transaction.css";
-
+import { Scanner } from "@yudiel/react-qr-scanner";
 export default function Transaction() {
     const { user } = useAuth();
     const role = user ? user.role : "Chưa Login";
-
+    const [showScanner, setShowScanner] = useState(false);
     const [bills, setBills] = useState([]);
     const [selectedBill, setSelectedBill] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -201,7 +201,7 @@ export default function Transaction() {
             <button className="filter-input" onClick={handleExportExcel} style={{ marginBottom: 16 }}>
                 Xuất Excel
             </button>
-
+           
             {/* Bộ lọc tìm kiếm */}
             <div className="filter-container">
                 <input
@@ -290,11 +290,7 @@ export default function Transaction() {
                                             </td>
                                         </tr>
                                     ))}
-                                    <tr className="bill-total-row">
-                                        <td colSpan="2"></td>
-                                        <td><strong>Tổng tháng: ${monthlyTotal}</strong></td>
-                                        <td colSpan="4"></td>
-                                    </tr>
+                                    
                                 </>
                             )}
                         </tbody>
@@ -319,7 +315,47 @@ export default function Transaction() {
                         >
                             Sau ▶
                         </button>
-                    </div>
+                        </div>
+
+                        <div style={{ marginBottom: 20 }}>
+                            <button
+                                className="filter-input"
+                                onClick={() => setShowScanner(!showScanner)}
+                            >
+                                {showScanner ? "❌ Tắt quét QR" : "📷 Quét mã QR"}
+                            </button>
+
+                            {showScanner && (
+                                <div style={{ marginTop: 10 }}>
+                                    <Scanner
+                                        onScan={(result) => {
+                                            if (result && result.length > 0) {
+                                                try {
+                                                    const qrData = JSON.parse(result[0].rawValue);
+                                                    if (qrData.billId) {
+                                                        const found = bills.find(b => b.billId === qrData.billId);
+                                                        if (found) {
+                                                            setSelectedBill(found);
+                                                            setShowScanner(false); // tắt scanner sau khi tìm thấy
+                                                        } else {
+                                                            alert("Không tìm thấy hóa đơn với mã QR này!");
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    console.error("QR không hợp lệ:", e);
+                                                }
+                                            }
+                                        }}
+                                        onError={(error) => console.error("Lỗi khi quét QR:", error)}
+                                        styles={{
+                                            container: { width: "300px", height: "300px" },
+                                            video: { borderRadius: "10px" },
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                 </>
             ) : (
                 <div className="bill-detail">
