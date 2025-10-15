@@ -8,12 +8,11 @@ function todayYYYYMMDD() {
     return `${y}-${m}-${dd}`;
 }
 
-// So sánh chuỗi yyyy-MM-dd theo thứ tự từ điển là đủ
 function isActive(ev, today) {
     const start = ev.discountStartDate;
     const end = ev.discountEndDate;
 
-    if (!start && !end) return true;          // luôn hiệu lực nếu không nhập ngày
+    if (!start && !end) return true;       
     if (start && !end) return today >= start;
     if (!start && end) return today <= end;
     return today >= start && today <= end;
@@ -21,11 +20,11 @@ function isActive(ev, today) {
 
 export default function PromotionSelector({
     selectedEventId,
-    onChange, // (eventId: string|null, discountPercent: number|null) => void
+    onChange,
 }) {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAll, setShowAll] = useState(false); // tùy chọn: xem tất cả để dễ debug
+    const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
         let ignore = false;
@@ -33,7 +32,7 @@ export default function PromotionSelector({
         async function load() {
             setLoading(true);
             try {
-                // Gọi trực tiếp /api/events (không phụ thuộc /active ở BE)
+              
                 const res = await fetch("http://localhost:8080/api/events");
                 if (!res.ok) throw new Error("Failed to load promotions");
                 const data = await res.json();
