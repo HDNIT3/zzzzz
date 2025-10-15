@@ -20,7 +20,7 @@ import { Operation } from "./pages/Admin/Operation";
 import { Schedule } from "./pages/Schedule";
 import Support from "./pages/Support";
 import { CounterBooking } from "./pages/CounterBooking";
-
+import Transaction from "./pages/Admin/Transaction";
 
 export default function App() {
     return (
@@ -49,6 +49,7 @@ export default function App() {
                 <Route path="/op" element={<Operation />} />
                 <Route path="/sched" element={<Schedule />} />
                 <Route path="/sup" element={<Support />} />
+                <Route path="/trans" element={<Transaction />} />
             </Routes>
 
             <Footer />
