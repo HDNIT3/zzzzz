@@ -8,7 +8,10 @@ import {
   autoAssignShifts as autoAssignShiftsAPI,
   getCurrentMonday,
   getCreatedWeeks,
+  // ⬇️ NEW: API xóa tuần
+  deleteWeek as deleteWeekAPI,
 } from "../services/ScheduleService";
+
 export function useSchedules() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -149,6 +152,27 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
+  // --- NEW: Xóa tuần (Monday)
+  const deleteWeek = useCallback(async (startDate) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await deleteWeekAPI(startDate);           // gọi API backend
+      // Cập nhật local state nhẹ để UI phản ánh ngay
+      setCreatedWeeks((prev) => prev.filter((d) => d !== startDate));
+      if (currentWeekStart === startDate) {
+        setSchedules([]); // rỗng tuần hiện tại (Schedule.jsx có thể sẽ gọi loadSchedule lại)
+      }
+      return true;
+    } catch (err) {
+      console.error("Error deleting week:", err);
+      setError(err.message || "Failed to delete week");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWeekStart]);
+
   return {
     schedules,
     loading,
@@ -162,5 +186,7 @@ export function useSchedules() {
     assignShift,
     cancelShift,
     autoAssignShifts,
+    // ⬇️ NEW
+    deleteWeek,
   };
 }
