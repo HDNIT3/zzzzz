@@ -6,11 +6,14 @@ import "../../styles/Transaction.css";
 import { Scanner } from "@yudiel/react-qr-scanner";
 export default function Transaction() {
     const { user } = useAuth();
+    const [allBills, setAllBills] = useState([]);
     const role = user ? user.role : "Chưa Login";
+    const myAccountId = user ? user.accountId : null;
     const [showScanner, setShowScanner] = useState(false);
     const [bills, setBills] = useState([]);
     const [selectedBill, setSelectedBill] = useState(null);
     const [loading, setLoading] = useState(false);
+
 
     // Bộ lọc
     const [email, setEmail] = useState("");
@@ -20,7 +23,7 @@ export default function Transaction() {
 
     // Phân trang
     const [page, setPage] = useState(0);
-    const [size] = useState(4);
+    const [size, setSize] = useState(4); 
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
@@ -141,16 +144,24 @@ export default function Transaction() {
     };
 
     useEffect(() => {
-        if (role === "ADMIN" || role === "MANAGER") {
+        if (role === "ADMIN" || role === "MANAGER" || role === "STAFF") {
             fetchBills();
         }
-    }, [role, page]);
+    }, [role, page, size]);
 
     const fetchBills = async () => {
         setLoading(true);
         try {
             const data = await searchBillsByCustomerInfo(email, phone, page, size);
-            setBills(data.content || []);
+            const all = data.content || [];
+            setAllBills(all);
+
+            let filtered = all;
+            if (role === "STAFF" && myAccountId) {
+                filtered = all.filter(bill => bill.cashier?.account?.accountId === myAccountId);
+            }
+
+            setBills(filtered);
             setTotalPages(data.totalPages || 0);
             setTotalElements(data.totalElements || 0);
         } catch (err) {
@@ -173,7 +184,7 @@ export default function Transaction() {
         if (page < totalPages - 1) setPage(page + 1);
     };
 
-    if (role !== "ADMIN" && role !== "MANAGER") {
+    if (role !== "ADMIN" && role !== "MANAGER" && role!=="STAFF") {
         return <div>404 Page</div>;
     }
 
@@ -246,6 +257,24 @@ export default function Transaction() {
                 <button className="btn-search" onClick={handleSearch}>
                     Tìm kiếm
                 </button>
+                <div style={{ marginTop: 10 }}>
+                    <label style={{ marginRight: 8 }}>Số dòng / trang:</label>
+                    <select
+                        value={size}
+                        onChange={(e) => {
+                            setSize(Number(e.target.value));
+                            setPage(0);
+                        }}
+                        className="filter-input"
+                        style={{ width: 80 }}
+                    >
+                        {[4, 8, 12, 20].map((num) => (
+                            <option key={num} value={num}>
+                                {num}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Nội dung chính */}
@@ -261,7 +290,8 @@ export default function Transaction() {
                                 <th>Total ($)</th>
                                 <th>Movie</th>
                                 <th>Room</th>
-                                <th>Customer</th>
+                                    <th>Customer</th>
+                                    <th>Cashier</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -280,6 +310,7 @@ export default function Transaction() {
                                             <td>{bill.movieTitle}</td>
                                             <td>{bill.theaterName}</td>
                                             <td>{bill.customerFullName}</td>
+                                            <td>{bill.cashier ? bill.cashier.fullName : "N/A"}</td>
                                             <td>
                                                 <button
                                                     className="btn-view"
@@ -328,15 +359,19 @@ export default function Transaction() {
                             {showScanner && (
                                 <div style={{ marginTop: 10 }}>
                                     <Scanner
-                                        onScan={(result) => {
+                                        onScan={async (result) => {
                                             if (result && result.length > 0) {
                                                 try {
                                                     const qrData = JSON.parse(result[0].rawValue);
                                                     if (qrData.billId) {
-                                                        const found = bills.find(b => b.billId === qrData.billId);
+                                                        // 🧠 Gọi API tìm trực tiếp bill theo ID
+                                                        const data = await searchBillsByCustomerInfo("", "", 0, size);
+                                                        const allBills = data.content || [];
+                                                        const found = allBills.find(b => b.billId === qrData.billId);
+
                                                         if (found) {
                                                             setSelectedBill(found);
-                                                            setShowScanner(false); // tắt scanner sau khi tìm thấy
+                                                            setShowScanner(false);
                                                         } else {
                                                             alert("Không tìm thấy hóa đơn với mã QR này!");
                                                         }
@@ -345,11 +380,6 @@ export default function Transaction() {
                                                     console.error("QR không hợp lệ:", e);
                                                 }
                                             }
-                                        }}
-                                        onError={(error) => console.error("Lỗi khi quét QR:", error)}
-                                        styles={{
-                                            container: { width: "300px", height: "300px" },
-                                            video: { borderRadius: "10px" },
                                         }}
                                     />
                                 </div>
@@ -404,7 +434,20 @@ export default function Transaction() {
                                 ))}
                             </ul>
                         </>
-                    )}
+                            )}
+
+                     
+                            {selectedBill.cashier ? (
+                                <>
+                                    <h3>Nhân viên thu ngân</h3>
+                                    <p><strong>Tên:</strong> {selectedBill.cashier.fullName}</p>
+                                    <p><strong>Email:</strong> {selectedBill.cashier.email}</p>
+                                    <p><strong>SĐT:</strong> {selectedBill.cashier.phoneNumber}</p>
+                                    <p><strong>Chức vụ:</strong> {selectedBill.cashier.position}</p>
+                                </>
+                            ) : (
+                                <p><em>Chưa có thông tin nhân viên thu ngân</em></p>
+                            )}
 
                     <button className="btn-back" onClick={() => setSelectedBill(null)}>
                         ⬅ Quay lại
