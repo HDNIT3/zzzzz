@@ -33,7 +33,6 @@ postersImport.keys().forEach((key) => {
     posters[fileName] = postersImport(key);
 });
 
-// Thêm Promotion tab
 const TABS = ["Customer", "Seats", "Services", "Promotion", "Payment"];
 
 export function CounterBooking() {
@@ -52,11 +51,9 @@ export function CounterBooking() {
     const [customerPhone, setCustomerPhone] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("CASH");
 
-    // Promotion selection
     const [selectedEventId, setSelectedEventId] = useState(null);
     const [discountPercent, setDiscountPercent] = useState(0);
 
-    // Fetch movie & showtime
     useEffect(() => {
         const fetchMovie = async () => {
             try {
@@ -90,13 +87,12 @@ export function CounterBooking() {
             return;
         }
 
-        // Submit services khi rời tab Services
         if (activeTabIndex === 2 && selectedServices.length > 0) {
             try {
                 const cashierId = user?.accountId;
                 if (!cashierId) throw new Error("Cashier ID not found");
 
-                const orderRes = await createServiceOrder(cashierId);
+                const orderRes = await createServiceOrder(cashierId, customerPhone);
                 const orderId = orderRes.orderId || orderRes.data?.orderId;
                 if (!orderId) throw new Error("Order ID not found");
 
@@ -109,8 +105,8 @@ export function CounterBooking() {
                 setServiceOrderId(orderId);
                 localStorage.setItem("currentServiceOrderId", orderId);
             } catch (err) {
-                console.error("❌ Failed to auto-submit services:", err);
-                alert("❌ Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
+                console.error("Failed to auto-submit services:", err);
+                alert("Failed to add services: " + (err.response?.data?.message || err.message || "Unknown error"));
                 return;
             }
         }
@@ -119,20 +115,18 @@ export function CounterBooking() {
     };
 
     const handleBackTab = async () => {
-        // Payment index là 4 sau khi thêm Promotion
         if (activeTabIndex === 4 && serviceOrderId) {
             try {
                 await deleteServiceOrder(serviceOrderId);
                 setServiceOrderId(null);
                 localStorage.removeItem("currentServiceOrderId");
             } catch (err) {
-                console.error("⚠️ Failed to delete service order:", err);
+                console.error("Failed to delete service order:", err);
             }
         }
         setActiveTabIndex(prev => Math.max(prev - 1, 0));
     };
 
-    // ✅ Memoize callbacks
     const handleSelectSeats = useCallback((seats) => {
         setSelectedSeats(seats);
     }, []);
@@ -150,12 +144,10 @@ export function CounterBooking() {
         setDiscountPercent(percent || 0);
     }, []);
 
-    // ✅ Memoize totalPrice
     const totalPrice = useMemo(() => {
         return selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
     }, [selectedSeats]);
 
-    // ✅ Memoize tab content
     const renderTabContent = useMemo(() => {
         const currentTab = TABS[activeTabIndex];
 
