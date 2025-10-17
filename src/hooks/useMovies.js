@@ -19,12 +19,12 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getAllMovies();
-      // Đảm bảo luôn trả về mảng
+      
       setMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setMovies([]); // Set empty array on error
+      setMovies([]); 
       console.error("Error fetching all movies:", err);
     } finally {
       setLoading(false);

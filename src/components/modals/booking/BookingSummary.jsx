@@ -132,9 +132,9 @@ export default function BookingSummary({
 
             setMessage(
                 `✅ Đặt vé thành công!
-Booking ID: ${bookingId}
-Bill ID: ${billId}
-Phương thức: ${normalizePaymentMethod(paymentMethod)}${selectedEventId ? `\nKhuyến mãi: -${safePercent}%` : ""
+                Booking ID: ${bookingId}
+                Bill ID: ${billId}
+                Phương thức: ${normalizePaymentMethod(paymentMethod)}${selectedEventId ? `\nKhuyến mãi: -${safePercent}%` : ""
                 }`
             );
 
