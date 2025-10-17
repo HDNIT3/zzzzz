@@ -3,7 +3,7 @@ import { useAuth } from "../../../hooks/useAuth";
 import { createPaymentRequest } from "../../../services/PaymentService";
 import { getServiceOrderById } from "../../../services/ServiceOrderService";
 import { createBooking } from "../../../services/BookingService";
-import { createBill } from "../../../services/BillService";
+import { createBill , AddBillEmployee} from "../../../services/BillService";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import "../../../styles/booking-summary.css";
 
@@ -130,14 +130,14 @@ export default function BookingSummary({
             localStorage.removeItem("currentShowtimeId");
             localStorage.removeItem("selectedSeatIds");
 
-            setMessage(
-                `✅ Đặt vé thành công!
-                Booking ID: ${bookingId}
-                Bill ID: ${billId}
-                Phương thức: ${normalizePaymentMethod(paymentMethod)}${selectedEventId ? `\nKhuyến mãi: -${safePercent}%` : ""
-                }`
-            );
+            setMessage(`✅ Đặt vé thành công!\nBooking ID: ${bookingId}\nBill ID: ${billId}\nPhương thức: ${paymentMethod}`);
 
+            if (user.role === 'STAFF') { 
+                console.log("🧾 Associating bill with employee:", cashierId);
+                console.log("🧾 Bill ID:", billId);
+                await AddBillEmployee(billId, cashierId);
+            }
+            // Redirect sau 3 giây
             setTimeout(() => {
                 window.location.href = "/counter-bookings";
             }, 3000);

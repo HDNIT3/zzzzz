@@ -19,9 +19,11 @@ import { Operation } from "./pages/Admin/Operation";
 import { Schedule } from "./pages/Schedule";
 import Support from "./pages/Support";
 import { CounterBooking } from "./pages/CounterBooking";
+import Transaction from "./pages/Admin/Transaction";
 import EventsPromotions from './pages/EventsPromotions';
 import EventsCarousel from './components/EventsCarousel';
 import MyShiftTimeline from "./pages/MyShiftTimeline";
+
 
 
 export default function App() {
@@ -54,7 +56,7 @@ export default function App() {
                 <Route path="/sched" element={<Schedule />} />
                 <Route path="/sup" element={<Support />} />
                 <Route path="/my-shifts" element={<MyShiftTimeline />} />
-
+                <Route path="/trans" element={<Transaction />} />
             </Routes>
 
             <Footer />

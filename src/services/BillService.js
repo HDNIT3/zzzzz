@@ -20,3 +20,13 @@ export const getBillsByAccount = async (accountId) => {
     throw error;
   }
 };
+
+
+
+export const AddBillEmployee = async (BillId, EmID) => {
+    const res = await api.get(`/api/transactions/AddEmployee`, {
+        params: { BillId, EmID },
+    });
+    return res.data;
+};
+
