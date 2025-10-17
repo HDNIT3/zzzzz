@@ -19,7 +19,7 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getAllMovies();
-      // Đảm bảo luôn trả về mảng
+
       setMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {

@@ -3,14 +3,26 @@ import { useSchedules } from "../hooks/useSchedules";
 import { AssignStaff } from "../components/modals/operation/AssignStaff";
 import { ScheduleSidebar } from "../components/modals/operation/ScheduleSidebar";
 import "../styles/schedule.css";
+import {
+  Calendar,
+  Trash2,
+  Bot,
+  AlertTriangle,
+  X,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Users,
+  UserPlus,
+} from "lucide-react";
 
-/* ===== Toast nhỏ gọn, tự ẩn sau 4s (phù hợp phong cách UI hiện có) ===== */
 function InlineToast({ toast, onClose }) {
   if (!toast) return null;
   const palette = {
-    warning: { bg: "rgba(255,193,7,0.12)", bd: "#FFC107", fg: "#B28704", icon: "⚠️" },
+    warning: { bg: "rgba(255,193,7,0.12)", bd: "#FFC107", fg: "#B28704", Icon: AlertTriangle },
   };
   const c = palette[toast.type] || palette.warning;
+  const Icon = c.Icon;
   return (
     <div
       role="status"
@@ -32,9 +44,11 @@ function InlineToast({ toast, onClose }) {
         gap: 10,
       }}
     >
-      <span style={{ fontSize: 18, lineHeight: "22px" }}>{c.icon}</span>
+      <span style={{ fontSize: 18, lineHeight: "22px" }}>
+        <Icon size={18} />
+      </span>
       <div style={{ fontSize: 14, lineHeight: "20px" }}>
-        <div style={{ fontWeight: 700, marginBottom: 2 }}>Thông báo</div>
+        <div style={{ fontWeight: 700, marginBottom: 2 }}>Notification</div>
         <div>{toast.message}</div>
       </div>
       <button
@@ -50,13 +64,12 @@ function InlineToast({ toast, onClose }) {
           cursor: "pointer",
         }}
       >
-        ×
+        <X size={18} />
       </button>
     </div>
   );
 }
 
-/* ===== Modal xác nhận chuẩn style hiện có ===== */
 function ConfirmModal({ open, title, message, confirmText = "Confirm", onConfirm, onCancel }) {
   if (!open) return null;
   return (
@@ -113,18 +126,14 @@ export function Schedule() {
   const [successMessage, setSuccessMessage] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Delete confirm modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Register confirm modal
   const [registerConfirmOpen, setRegisterConfirmOpen] = useState(false);
   const [pendingShiftId, setPendingShiftId] = useState(null);
 
-  // Auto-assign confirm
   const [autoAssignConfirmOpen, setAutoAssignConfirmOpen] = useState(false);
   const [autoAssignTargetMonday, setAutoAssignTargetMonday] = useState("");
 
-  // Toast
   const [toast, setToast] = useState(null);
   const showToast = (message) => {
     setToast({ type: "warning", message });
@@ -147,45 +156,42 @@ export function Schedule() {
     return !Number.isNaN(d.getTime()) && d.getDay() === 1;
   };
 
-  // ===== Map lỗi theo ngữ cảnh & message backend (đã bổ sung đủ case) =====
   const mapAxiosError = (err, mondayHint, action) => {
     const st = err?.response?.status;
     const rawMsg =
       (err?.response?.data && (err.response.data.message || err.response.data.error)) || "";
     const msg = String(rawMsg).toLowerCase();
 
-    if (msg.includes("already registered")) return "Bạn đã đăng ký ca này rồi.";
-    if (msg.includes("already assigned")) return "Nhân viên đã được gán vào ca này.";
+    if (msg.includes("already registered")) return "You have already registered for this shift.";
+    if (msg.includes("already assigned")) return "Employee is already assigned to this shift.";
     if (msg.includes("start date must be monday"))
-      return `Yêu cầu ngày THỨ HAI (YYYY-MM-DD). Gợi ý: ${mondayHint || "chọn đúng Monday"}.`;
-    if (msg.includes("no shifts found")) return "Tuần này chưa có ca nào.";
-    if (msg.includes("shift not found")) return "Không tìm thấy ca làm này.";
-    if (msg.includes("employee not found")) return "Không tìm thấy nhân viên.";
-    if (msg.includes("registration not found")) return "Không tìm thấy đăng ký.";
+      return `Start date must be a MONDAY (YYYY-MM-DD). Suggestion: ${mondayHint || "pick the correct Monday"}.`;
+    if (msg.includes("no shifts found")) return "No shifts found for this week.";
+    if (msg.includes("shift not found")) return "Shift not found.";
+    if (msg.includes("employee not found")) return "Employee not found.";
+    if (msg.includes("registration not found")) return "Registration not found.";
 
-    // Các ràng buộc tự đăng ký
-    if (msg.includes("weekly shift limit exceeded")) return "Bạn đã vượt quá số ca tối đa/tuần (6 ca).";
-    if (msg.includes("weekly hour limit exceeded")) return "Bạn đã vượt quá 40 giờ làm việc/tuần.";
-    if (msg.includes("shift time conflict")) return "Ca này trùng thời gian với ca đã đăng ký.";
-    if (msg.includes("not enough rest time")) return "Giữa hai ca phải cách nhau tối thiểu 12 giờ.";
-    if (msg.includes("consecutive day limit exceeded")) return "Bạn đã vượt quá giới hạn 5 ngày liên tiếp.";
+    if (msg.includes("weekly shift limit exceeded")) return "You have exceeded the weekly shift limit (6 shifts).";
+    if (msg.includes("weekly hour limit exceeded")) return "You have exceeded 40 working hours for the week.";
+    if (msg.includes("shift time conflict")) return "This shift conflicts with another registered shift.";
+    if (msg.includes("not enough rest time")) return "There must be at least 12 hours rest between shifts.";
+    if (msg.includes("consecutive day limit exceeded")) return "You have exceeded the limit of 5 consecutive working days.";
 
     if (st === 400) {
       if (["create", "auto-assign", "delete", "load"].includes(action)) {
-        return `Yêu cầu ngày THỨ HAI (YYYY-MM-DD). Gợi ý: ${mondayHint || "chọn đúng Monday"}.`;
+        return `Start date must be a MONDAY (YYYY-MM-DD). Suggestion: ${mondayHint || "pick the correct Monday"}.`;
       }
-      return "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại.";
+      return "Bad request. Please check your input.";
     }
-    if (st === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
-    if (st === 403) return "Bạn không có quyền thực hiện thao tác này.";
+    if (st === 401) return "Session expired. Please log in again.";
+    if (st === 403) return "You don't have permission to perform this action.";
     if (st === 404)
-      return `Tuần này chưa được tạo. ${
-        userRole === "MANAGER" || userRole === "ADMIN" ? "Hãy dùng Create Week." : "Liên hệ quản lý để tạo tuần."
+      return `This week has not been created yet. ${
+        userRole === "MANAGER" || userRole === "ADMIN" ? "Use Create Week." : "Contact your manager to create it."
       }`;
-    if (st === 409) return "Tuần/Ca đã tồn tại hoặc đã đầy. Hãy tải lại và thử lựa chọn khác.";
-    return "Không thể kết nối máy chủ. Vui lòng thử lại.";
+    if (st === 409) return "Week/Shift already exists or is full. Please reload and try a different option.";
+    return "Unable to connect to the server. Please try again.";
   };
-  // =====================================================================
 
   const groupedShifts = safeSchedules.reduce((acc, shift) => {
     const date = shift.workDate;
@@ -216,7 +222,7 @@ export function Schedule() {
     if (!selectedDate) return;
     const canCreate = userRole === "ADMIN" || userRole === "MANAGER";
     if (!canCreate) {
-      showToast("Chỉ MANAGER/ADMIN mới được tạo tuần.");
+      showToast("Only MANAGER/ADMIN can create a week.");
       return;
     }
     const monday = getMondayOfWeek(selectedDate);
@@ -229,16 +235,16 @@ export function Schedule() {
 
   const handleOpenDeleteModal = () => {
     if (!(userRole === "ADMIN" || userRole === "MANAGER")) {
-      showToast("Chỉ MANAGER/ADMIN mới được xoá tuần.");
+      showToast("Only MANAGER/ADMIN can delete a week.");
       return;
     }
     if (!selectedDate) {
-      showToast("Please select a date");
+      showToast("Please select a date.");
       return;
     }
     const monday = getMondayOfWeek(selectedDate);
     if (selectedDate !== monday) {
-      showToast(`Xoá tuần chỉ áp dụng cho ngày THỨ HAI. Hãy chọn đúng Monday của tuần: ${monday}.`);
+      showToast(`Delete works only on a MONDAY. Please choose the week's Monday: ${monday}.`);
       return;
     }
     setShowDeleteModal(true);
@@ -248,13 +254,13 @@ export function Schedule() {
     const monday = selectedDate;
     if (typeof deleteWeek !== "function") {
       setShowDeleteModal(false);
-      showToast("Chức năng xoá tuần chưa khả dụng trên phiên bản hiện tại.");
+      showToast("Delete week is not available in this version.");
       return;
     }
     try {
       await deleteWeek(monday);
       setShowDeleteModal(false);
-      showSuccess(`Đã xoá tuần ${monday}.`);
+      showSuccess(`Week ${monday} deleted.`);
       try {
         await loadSchedule(monday);
       } catch {}
@@ -264,7 +270,6 @@ export function Schedule() {
     }
   };
 
-  // Register with confirm modal
   const handleRegisterClick = (shiftId) => {
     setPendingShiftId(shiftId);
     setRegisterConfirmOpen(true);
@@ -281,7 +286,6 @@ export function Schedule() {
     }
   };
 
-  // Auto-assign
   const handleOpenAutoAssignModal = () => {
     setAutoAssignDate("");
     setAutoAssignConfirmOpen(false);
@@ -289,7 +293,7 @@ export function Schedule() {
   };
   const handleAutoAssignSubmit = () => {
     if (!autoAssignDate) {
-      showToast("Please select a date");
+      showToast("Please select a date.");
       return;
     }
     const mondayDate = getMondayOfWeek(autoAssignDate);
@@ -301,18 +305,17 @@ export function Schedule() {
     setAutoAssignConfirmOpen(false);
     try {
       const result = await autoAssignShifts(mondayDate);
-      showSuccess(`Auto-assigned ${result.assignedCount} shifts successfully for week ${mondayDate}!`);
+      showSuccess(`Auto-assigned ${result.assignedCount} shifts for week ${mondayDate}!`);
       setShowAutoAssignModal(false);
     } catch (err) {
       showToast(mapAxiosError(err, mondayDate, "auto-assign"));
     }
   };
 
-  // Assign employee handler
   const handleAssignEmployee = async (employeeId, shiftId) => {
     try {
       await assignShift(employeeId, shiftId);
-      showSuccess("Successfully assigned employee to shift!");
+      showSuccess("Employee assigned to shift successfully!");
       setShowAssignModal(false);
       setSelectedShiftForAssign(null);
     } catch (err) {
@@ -349,8 +352,13 @@ export function Schedule() {
         loading={loading}
       />
 
-      <button className="schedule-sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-        📅
+      <button
+        className="schedule-sidebar-toggle"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle calendar sidebar"
+        title="Toggle calendar sidebar"
+      >
+        <Calendar />
       </button>
 
       <div className="shift-schedule-container">
@@ -393,7 +401,7 @@ export function Schedule() {
                   title="Delete the selected week (Monday only)"
                   style={{ marginLeft: 8 }}
                 >
-                  🗑️ Delete Week
+                  <Trash2 style={{ verticalAlign: "middle" }} /> Delete Week
                 </button>
               )}
             </div>
@@ -403,8 +411,9 @@ export function Schedule() {
                 className="shift-schedule-btn shift-schedule-btn-warning"
                 onClick={handleOpenAutoAssignModal}
                 disabled={loading}
+                title="Auto assign available employees to shifts"
               >
-                🤖 Auto Assign Shifts
+                <Bot style={{ verticalAlign: "middle", marginRight: 8 }} /> Auto Assign Shifts
               </button>
             )}
           </div>
@@ -420,7 +429,9 @@ export function Schedule() {
           </div>
         ) : safeSchedules.length === 0 ? (
           <div className="shift-schedule-empty-state">
-            <div className="shift-schedule-empty-state-icon">📅</div>
+            <div className="shift-schedule-empty-state-icon">
+              <Calendar />
+            </div>
             <h2>No schedule found</h2>
             <p>Please select a Monday date and create a schedule</p>
           </div>
@@ -433,7 +444,9 @@ export function Schedule() {
                     <h2 className="shift-schedule-day-title">{formatDate(date)}</h2>
                     <p className="shift-schedule-day-date">{date}</p>
                   </div>
-                  {isWeekend(date) && <span className="shift-schedule-weekend-badge">Weekend</span>}
+                  {isWeekend(date) && (
+                    <span className="shift-schedule-weekend-badge">Weekend</span>
+                  )}
                 </div>
 
                 <div className="shift-schedule-shifts-list">
@@ -443,9 +456,13 @@ export function Schedule() {
                         <div>
                           <h3 className="shift-schedule-shift-name">{shift.name}</h3>
                           <p className="shift-schedule-shift-time">
-                            ⏰ {shift.startTime} - {shift.endTime}
+                            <Clock size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                            {shift.startTime} - {shift.endTime}
                           </p>
-                          <p className="shift-schedule-shift-details">📋 {shift.note || "No additional notes"}</p>
+                          <p className="shift-schedule-shift-details">
+                            <FileText size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                            {shift.note || "No additional notes"}
+                          </p>
                         </div>
                         <span className={`shift-schedule-shift-status ${shift.shiftStatus.toLowerCase()}`}>
                           {shift.shiftStatus}
@@ -459,7 +476,8 @@ export function Schedule() {
                             onClick={() => handleRegisterClick(shift.shiftId)}
                             disabled={loading || shift.shiftStatus === "FULL"}
                           >
-                            ✋ Register
+                            <UserPlus size={14} style={{ verticalAlign: "middle", marginRight: 8 }} />
+                            Register
                           </button>
                         )}
 
@@ -470,20 +488,28 @@ export function Schedule() {
                               onClick={() => handleRegisterClick(shift.shiftId)}
                               disabled={loading || shift.shiftStatus === "FULL"}
                             >
-                              ✋ Register Self
+                              <UserPlus size={14} style={{ verticalAlign: "middle", marginRight: 8 }} />
+                              Register Self
                             </button>
                             <button
                               className="shift-schedule-btn shift-schedule-btn-success shift-schedule-btn-small"
-                              onClick={() => setShowAssignModal(true) || setSelectedShiftForAssign(shift)}
+                              onClick={() => {
+                                setShowAssignModal(true);
+                                setSelectedShiftForAssign(shift);
+                              }}
                               disabled={loading || shift.shiftStatus === "FULL"}
                             >
-                              👥 Assign Employee
+                              <Users size={14} style={{ verticalAlign: "middle", marginRight: 8 }} />
+                              Assign Employee
                             </button>
                           </>
                         )}
 
                         {shift.shiftStatus === "FULL" && (
-                          <span style={{ color: "#a8e063", fontSize: "0.85rem", fontStyle: "italic" }}>✓ Shift is full</span>
+                          <span style={{ color: "#a8e063", fontSize: "0.85rem", fontStyle: "italic" }}>
+                            <CheckCircle2 size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                            Shift is full
+                          </span>
                         )}
                       </div>
                     </div>
@@ -494,7 +520,6 @@ export function Schedule() {
           </div>
         )}
 
-        {/* Assign Staff Modal */}
         <AssignStaff
           isOpen={showAssignModal}
           onClose={() => {
@@ -507,11 +532,12 @@ export function Schedule() {
           weekStart={currentWeekStart}
         />
 
-        {/* Auto Assign Modal */}
         {showAutoAssignModal && (
           <div className="shift-schedule-modal-overlay" onClick={() => setShowAutoAssignModal(false)}>
             <div className="shift-schedule-modal" onClick={(e) => e.stopPropagation()}>
-              <h2 className="shift-schedule-modal-header">🤖 Auto Assign Shifts</h2>
+              <h2 className="shift-schedule-modal-header">
+                <Bot style={{ verticalAlign: "middle", marginRight: 8 }} /> Auto Assign Shifts
+              </h2>
 
               <div className="shift-schedule-modal-body">
                 <div className="shift-schedule-form-group">
@@ -538,7 +564,10 @@ export function Schedule() {
                       border: "1px solid #90caf9",
                     }}
                   >
-                    <label style={{ color: "#1976d2", fontWeight: "600" }}>📅 Target Week Start (Monday):</label>
+                    <label style={{ color: "#1976d2", fontWeight: "600" }}>
+                      <Calendar size={14} style={{ verticalAlign: "middle", marginRight: 8 }} />
+                      Target Week Start (Monday):
+                    </label>
                     <div style={{ fontSize: "1.1rem", color: "#0d47a1", fontWeight: "bold", marginTop: "5px" }}>
                       {getMondayOfWeek(autoAssignDate)}
                     </div>
@@ -555,37 +584,47 @@ export function Schedule() {
                   }}
                 >
                   <p style={{ margin: 0, color: "#e65100", fontSize: "0.9rem" }}>
-                    ⚠️ <strong>Note:</strong> This will automatically assign available employees to all shifts in the
-                    selected week based on their availability and working hour limits.
+                    <AlertTriangle size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+                    <strong>Note:</strong> This will automatically assign available employees to all shifts in the
+                    selected week based on availability and working-hour limits.
                   </p>
                 </div>
               </div>
 
               <div className="shift-schedule-modal-actions">
-                <button className="shift-schedule-btn shift-schedule-btn-secondary" onClick={() => setShowAutoAssignModal(false)}>
+                <button
+                  className="shift-schedule-btn shift-schedule-btn-secondary"
+                  onClick={() => setShowAutoAssignModal(false)}
+                >
                   Cancel
                 </button>
-                <button className="shift-schedule-btn shift-schedule-btn-warning" onClick={handleAutoAssignSubmit} disabled={!autoAssignDate || loading}>
-                  🤖 Auto Assign
+                <button
+                  className="shift-schedule-btn shift-schedule-btn-warning"
+                  onClick={handleAutoAssignSubmit}
+                  disabled={!autoAssignDate || loading}
+                >
+                  <Bot size={14} style={{ verticalAlign: "middle", marginRight: 8 }} />
+                  Auto Assign
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Delete Week Modal */}
         {showDeleteModal && (
           <div className="shift-schedule-modal-overlay" onClick={() => setShowDeleteModal(false)}>
             <div className="shift-schedule-modal" onClick={(e) => e.stopPropagation()}>
-              <h2 className="shift-schedule-modal-header">🗑️ Delete Week</h2>
+              <h2 className="shift-schedule-modal-header">
+                <Trash2 style={{ verticalAlign: "middle", marginRight: 8 }} /> Delete Week
+              </h2>
               <div className="shift-schedule-modal-body">
                 <div
                   className="shift-schedule-form-group"
                   style={{ background: "#ffebee", padding: "12px", borderRadius: "8px", border: "1px solid #ef9a9a" }}
                 >
                   <p style={{ margin: 0, color: "#b71c1c" }}>
-                    Bạn sắp <strong>xóa toàn bộ tuần</strong> bắt đầu từ <strong>{selectedDate}</strong>. Thao tác này{" "}
-                    <strong>không thể hoàn tác</strong>. Hãy xác nhận để tiếp tục.
+                    You are about to <strong>delete the entire week</strong> starting <strong>{selectedDate}</strong>. This action{" "}
+                    <strong>cannot be undone</strong>. Please confirm to proceed.
                   </p>
                 </div>
               </div>
@@ -594,18 +633,17 @@ export function Schedule() {
                   Cancel
                 </button>
                 <button className="shift-schedule-btn shift-schedule-btn-warning" onClick={handleConfirmDeleteWeek} disabled={loading}>
-                  🗑️ Delete
+                  <Trash2 size={14} style={{ verticalAlign: "middle", marginRight: 8 }} /> Delete
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Register Confirm */}
         <ConfirmModal
           open={registerConfirmOpen}
-          title="✋ Confirm Registration"
-          message="Bạn có chắc muốn đăng ký ca này không?"
+          title={<><UserPlus style={{ verticalAlign: "middle", marginRight: 8 }} /> Confirm Registration</>}
+          message="Are you sure you want to register for this shift?"
           confirmText="Register"
           onConfirm={handleConfirmRegister}
           onCancel={() => {
@@ -614,11 +652,10 @@ export function Schedule() {
           }}
         />
 
-        {/* Auto-Assign Confirm */}
         <ConfirmModal
           open={autoAssignConfirmOpen}
-          title="🤖 Confirm Auto-Assign"
-          message={`Hệ thống sẽ tự động phân công cho tuần bắt đầu ${autoAssignTargetMonday}. Bạn chắc chắn chứ?`}
+          title={<><Bot style={{ verticalAlign: "middle", marginRight: 8 }} /> Confirm Auto-Assign</>}
+          message={`The system will auto-assign employees for the week starting ${autoAssignTargetMonday}. Proceed?`}
           confirmText="Run Auto-Assign"
           onConfirm={handleConfirmAutoAssign}
           onCancel={() => setAutoAssignConfirmOpen(false)}
@@ -627,3 +664,5 @@ export function Schedule() {
     </div>
   );
 }
+
+export default Schedule;
