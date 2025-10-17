@@ -19,7 +19,6 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getAllMovies();
-      
       setMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
@@ -35,12 +34,11 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getHotMovies();
-      // Đảm bảo luôn trả về mảng
       setHotMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setHotMovies([]); // Set empty array on error
+      setHotMovies([]); 
       console.error("Error fetching hot movies:", err);
     } finally {
       setLoading(false);
@@ -51,27 +49,22 @@ export function useMovies() {
     try {
       setLoading(true);
       const data = await getUpcomingMovies();
-      // Đảm bảo luôn trả về mảng
       setUpcomingMovies(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
-      setUpcomingMovies([]); // Set empty array on error
+      setUpcomingMovies([]); 
       console.error("Error fetching upcoming movies:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Create movie với poster upload
   const createMovie = async (movieData, posterFile) => {
     try {
       setLoading(true);
       const newMovie = await createMovieAPI(movieData, posterFile);
-      
-      // Refresh danh sách movies
       await fetchAllMovies();
-      
       setError(null);
       return newMovie;
     } catch (err) {
@@ -83,13 +76,10 @@ export function useMovies() {
     }
   };
 
-  // Update movie với optional poster
   const updateMovie = async (movieId, movieData = null, posterFile = null) => {
     try {
       setLoading(true);
       const updatedMovie = await updateMovieAPI(movieId, movieData, posterFile);
-      
-      // Refresh danh sách movies
       await fetchAllMovies();
       
       setError(null);
@@ -103,15 +93,11 @@ export function useMovies() {
     }
   };
 
-  // Delete movie
   const deleteMovie = async (movieId) => {
     try {
       setLoading(true);
       await deleteMovieAPI(movieId);
-      
-      // Refresh danh sách movies
       await fetchAllMovies();
-      
       setError(null);
     } catch (err) {
       setError(err.message);
