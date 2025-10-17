@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Users, PlusCircle, Pencil, Search, X } from "lucide-react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getEmployees, createEmployee, updateEmployee } from "../services/EmployeeService";
@@ -11,7 +11,6 @@ export default function Staff() {
         email: "",
         phoneNumber: "",
         dateOfBirth: "",
-        position: "",
         username: "",
     };
 
@@ -80,7 +79,6 @@ export default function Staff() {
             email: emp.email || "",
             phoneNumber: emp.phoneNumber || "",
             dateOfBirth: emp.dateOfBirth || "",
-            position: emp.position || "",
             username: emp.username || "",
         });
         setEditing(true);
@@ -197,17 +195,6 @@ export default function Staff() {
                             </div>
 
                             <div className="staff-form-group">
-                                <label>Vị trí</label>
-                                <input
-                                    name="position"
-                                    value={form.position}
-                                    onChange={onChange}
-                                    placeholder="VD: Cashier"
-                                    required
-                                />
-                            </div>
-
-                            <div className="staff-form-group">
                                 <label>Username</label>
                                 <input
                                     name="username"
@@ -259,7 +246,6 @@ export default function Staff() {
                                         <th>Email</th>
                                         <th>SĐT</th>
                                         <th>Ngày sinh</th>
-                                        <th>Vị trí</th>
                                         <th>Username</th>
                                         <th className="text-center">Thao tác</th>
                                     </tr>
@@ -267,7 +253,7 @@ export default function Staff() {
                                 <tbody>
                                     {employees.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="staff-empty">Không có dữ liệu</td>
+                                            <td colSpan={6} className="staff-empty">Không có dữ liệu</td>
                                         </tr>
                                     ) : (
                                         employees.map((e) => (
@@ -276,7 +262,6 @@ export default function Staff() {
                                                 <td>{e.email}</td>
                                                 <td>{e.phoneNumber}</td>
                                                 <td>{e.dateOfBirth}</td>
-                                                <td>{e.position}</td>
                                                 <td>{e.username}</td>
                                                 <td className="text-center">
                                                     <button className="staff-btn staff-btn-warning staff-btn-sm" onClick={() => onEdit(e)}>
