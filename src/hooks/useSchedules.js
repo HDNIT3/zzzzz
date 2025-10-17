@@ -8,6 +8,7 @@ import {
   autoAssignShifts as autoAssignShiftsAPI,
   getCurrentMonday,
   getCreatedWeeks,
+  getMyRegisteredShifts as getMyRegisteredShiftsAPI,
   deleteWeek as deleteWeekAPI,
 } from "../services/ScheduleService";
 
@@ -29,7 +30,6 @@ export function useSchedules() {
     }
   }, []);
 
-  // Initialize: load current Monday và danh sách weeks đã tạo
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
@@ -50,9 +50,6 @@ export function useSchedules() {
     initializeData();
   }, []);
 
-  /**
-   * Load lịch làm việc của 1 tuần
-   */
   const loadSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
@@ -69,9 +66,6 @@ export function useSchedules() {
     }
   }, []);
 
-  /**
-   * Tạo lịch làm việc mới (MANAGER/ADMIN)
-   */
   const createSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
@@ -80,7 +74,6 @@ export function useSchedules() {
       setSchedules(data);
       setCurrentWeekStart(startDate);
       
-      // Thêm tuần mới vào danh sách nếu chưa có
       if (!createdWeeks.includes(startDate)) {
         setCreatedWeeks((prev) => [...prev, startDate].sort());
       }
@@ -95,16 +88,12 @@ export function useSchedules() {
     }
   }, [createdWeeks]);
 
-  /**
-   * Đăng ký ca làm việc (STAFF/MANAGER)
-   */
   const registerShift = useCallback(async (shiftId) => {
     setLoading(true);
     setError(null);
     try {
       const result = await registerShiftAPI(shiftId);
       
-      // Reload lịch hiện tại để cập nhật UI
       if (currentWeekStart) {
         await loadSchedule(currentWeekStart);
       }
@@ -119,16 +108,27 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
-  /**
-   * Gán nhân viên vào ca (MANAGER/ADMIN)
-   */
+  const getMyRegisteredShifts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getMyRegisteredShiftsAPI();
+      return result;
+    } catch (err) {
+      console.error("Error getting registered shifts:", err);
+      setError(err.message || "Failed to get registered shifts");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  })
+
   const assignShift = useCallback(async (employeeId, shiftId) => {
     setLoading(true);
     setError(null);
     try {
       const result = await assignShiftAPI(employeeId, shiftId);
-      
-      // Reload lịch hiện tại
+
       if (currentWeekStart) {
         await loadSchedule(currentWeekStart);
       }
@@ -143,16 +143,12 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
-  /**
-   * HỦY ca làm việc đã đăng ký
-   */
   const cancelShift = useCallback(async (registrationId) => {
     setLoading(true);
     setError(null);
     try {
       const result = await cancelShiftAPI(registrationId);
-      
-      // Reload lịch hiện tại để cập nhật UI
+
       if (currentWeekStart) {
         await loadSchedule(currentWeekStart);
       }
@@ -167,16 +163,12 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
-  /**
-   * Auto-assign nhân viên cho tất cả ca trong tuần (MANAGER/ADMIN)
-   */
   const autoAssignShifts = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
       const result = await autoAssignShiftsAPI(startDate);
-      
-      // Reload lịch nếu đang xem tuần đó
+
       if (startDate === currentWeekStart) {
         await loadSchedule(startDate);
       }
@@ -191,19 +183,14 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
-  /**
-   * Xóa toàn bộ lịch của 1 tuần (MANAGER/ADMIN)
-   */
   const deleteWeek = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
       await deleteWeekAPI(startDate);
       
-      // Xóa tuần khỏi danh sách
       setCreatedWeeks((prev) => prev.filter((d) => d !== startDate));
       
-      // Clear schedules nếu đang xem tuần đó
       if (currentWeekStart === startDate) {
         setSchedules([]);
       }
@@ -231,6 +218,7 @@ export function useSchedules() {
     assignShift,
     cancelShift,
     autoAssignShifts,
+    getMyRegisteredShifts,
     deleteWeek,
   };
 }
