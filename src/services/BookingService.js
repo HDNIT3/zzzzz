@@ -19,18 +19,6 @@ export async function updateSeatSelection(seatIds, status) {
     throw error;
   }
 }
-
-/**
- * 🔹 Tạo booking (dùng cho cả online và tại quầy)
- * @param {string} showtimeId - Mã suất chiếu
- * @param {string|null} customerId - ID khách hàng (accountId - dùng cho online booking)
- * @param {Array<string>} seatIds - Danh sách ID ghế
- * @param {string|null} serviceOrderId - ID dịch vụ (nếu có)
- * @param {boolean} isCounterBooking - true nếu đặt tại quầy
- * @param {string|null} cashierId - ID nhân viên (nếu tại quầy)
- * @param {string|null} customerPhone - SĐT khách hàng (nếu tại quầy)
- * @returns {Promise<Object>} Thông tin booking đã tạo
- */
 export async function createBooking(
   showtimeId,
   customerId = null,

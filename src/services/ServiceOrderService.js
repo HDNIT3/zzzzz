@@ -1,7 +1,11 @@
 import api from "./api";
 
-export const createServiceOrder = async (accountId) => {
-  const res = await api.post(`http://localhost:8080/api/service-orders?accountId=${accountId}`);
+export const createServiceOrder = async (accountId, phoneNumber) => {
+  const params = new URLSearchParams();
+  if (accountId) params.append('accountId', accountId);
+  if (phoneNumber) params.append('phoneNumber', phoneNumber);
+
+  const res = await api.post(`api/service-orders?${params.toString()}`);
   return res.data;
 };
 
