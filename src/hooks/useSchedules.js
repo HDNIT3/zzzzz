@@ -17,8 +17,9 @@ export function useSchedules() {
   const [error, setError] = useState(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(null);
   const [createdWeeks, setCreatedWeeks] = useState([]);
-  const [userRole, setUserRole] = useState("STAFF"); 
+  const [userRole, setUserRole] = useState("STAFF");
 
+  // Load user role từ storage
   useEffect(() => {
     try {
       const role = localStorage.getItem("role") || sessionStorage.getItem("role");
@@ -28,6 +29,7 @@ export function useSchedules() {
     }
   }, []);
 
+  // Initialize: load current Monday và danh sách weeks đã tạo
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
@@ -48,6 +50,9 @@ export function useSchedules() {
     initializeData();
   }, []);
 
+  /**
+   * Load lịch làm việc của 1 tuần
+   */
   const loadSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
@@ -58,20 +63,28 @@ export function useSchedules() {
     } catch (err) {
       console.error("Error loading schedule:", err);
       setError(err.message || "Failed to load schedule");
+      throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /**
+   * Tạo lịch làm việc mới (MANAGER/ADMIN)
+   */
   const createSchedule = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
       const data = await createScheduleAPI(startDate);
       setSchedules(data);
+      setCurrentWeekStart(startDate);
+      
+      // Thêm tuần mới vào danh sách nếu chưa có
       if (!createdWeeks.includes(startDate)) {
-        setCreatedWeeks((prev) => [...prev, startDate]);
+        setCreatedWeeks((prev) => [...prev, startDate].sort());
       }
+      
       return data;
     } catch (err) {
       console.error("Error creating schedule:", err);
@@ -82,11 +95,20 @@ export function useSchedules() {
     }
   }, [createdWeeks]);
 
+  /**
+   * Đăng ký ca làm việc (STAFF/MANAGER)
+   */
   const registerShift = useCallback(async (shiftId) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await registerShiftAPI(shiftId);
-      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      
+      // Reload lịch hiện tại để cập nhật UI
+      if (currentWeekStart) {
+        await loadSchedule(currentWeekStart);
+      }
+      
       return result;
     } catch (err) {
       console.error("Error registering shift:", err);
@@ -97,11 +119,20 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
+  /**
+   * Gán nhân viên vào ca (MANAGER/ADMIN)
+   */
   const assignShift = useCallback(async (employeeId, shiftId) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await assignShiftAPI(employeeId, shiftId);
-      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      
+      // Reload lịch hiện tại
+      if (currentWeekStart) {
+        await loadSchedule(currentWeekStart);
+      }
+      
       return result;
     } catch (err) {
       console.error("Error assigning shift:", err);
@@ -112,11 +143,20 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
+  /**
+   * HỦY ca làm việc đã đăng ký
+   */
   const cancelShift = useCallback(async (registrationId) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await cancelShiftAPI(registrationId);
-      if (currentWeekStart) await loadSchedule(currentWeekStart);
+      
+      // Reload lịch hiện tại để cập nhật UI
+      if (currentWeekStart) {
+        await loadSchedule(currentWeekStart);
+      }
+      
       return result;
     } catch (err) {
       console.error("Error canceling shift:", err);
@@ -127,11 +167,20 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
+  /**
+   * Auto-assign nhân viên cho tất cả ca trong tuần (MANAGER/ADMIN)
+   */
   const autoAssignShifts = useCallback(async (startDate) => {
     setLoading(true);
+    setError(null);
     try {
       const result = await autoAssignShiftsAPI(startDate);
-      if (startDate === currentWeekStart) await loadSchedule(startDate);
+      
+      // Reload lịch nếu đang xem tuần đó
+      if (startDate === currentWeekStart) {
+        await loadSchedule(startDate);
+      }
+      
       return result;
     } catch (err) {
       console.error("Error auto-assigning shifts:", err);
@@ -142,15 +191,23 @@ export function useSchedules() {
     }
   }, [currentWeekStart, loadSchedule]);
 
+  /**
+   * Xóa toàn bộ lịch của 1 tuần (MANAGER/ADMIN)
+   */
   const deleteWeek = useCallback(async (startDate) => {
     setLoading(true);
     setError(null);
     try {
-      await deleteWeekAPI(startDate);       
+      await deleteWeekAPI(startDate);
+      
+      // Xóa tuần khỏi danh sách
       setCreatedWeeks((prev) => prev.filter((d) => d !== startDate));
+      
+      // Clear schedules nếu đang xem tuần đó
       if (currentWeekStart === startDate) {
-        setSchedules([]); 
+        setSchedules([]);
       }
+      
       return true;
     } catch (err) {
       console.error("Error deleting week:", err);

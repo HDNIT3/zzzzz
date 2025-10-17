@@ -30,7 +30,7 @@ const baseMenu = {
     ],
     MANAGER: [
         { label: "Home", path: "/", icon: Home },
-        { label: "POS - Booking", path: "/pos", icon: Clapperboard },
+        { label: "POS - Booking", path: "/mov-bok", icon: Clapperboard },
         { label: "Customer", path: "/cus", icon: Users },
         { label: "Transactions", path: "/trans", icon: Calendar },
         { label: "Operation", path: "/op", icon: BarChart3 },
@@ -42,7 +42,6 @@ const baseMenu = {
     ],
     ADMIN: [
         { label: "Home", path: "/", icon: Home },
-        { label: "POS - Booking", path: "/pos", icon: Clapperboard },
         { label: "Customer", path: "/cus", icon: Users },
         { label: "Transactions", path: "/trans", icon: Calendar },
         { label: "Operation", path: "/op", icon: BarChart3 },
@@ -51,7 +50,6 @@ const baseMenu = {
         { label: "Schedule", path: "/sched", icon: Calendar },
         { label: "Reports", path: "/rep", icon: ClipboardList },
         { label: "Settings", path: "/set", icon: Settings },
-        { label: "Security", path: "/sec", icon: Shield },
         { label: "Support", path: "/sup", icon: Hash },
     ],
 };

@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 
 import Header from "./components/Header";
@@ -22,6 +21,8 @@ import Support from "./pages/Support";
 import { CounterBooking } from "./pages/CounterBooking";
 import EventsPromotions from './pages/EventsPromotions';
 import EventsCarousel from './components/EventsCarousel';
+import MyShiftTimeline from "./pages/MyShiftTimeline";
+
 
 export default function App() {
     return (
@@ -52,6 +53,8 @@ export default function App() {
                 <Route path="/op" element={<Operation />} />
                 <Route path="/sched" element={<Schedule />} />
                 <Route path="/sup" element={<Support />} />
+                <Route path="/my-shifts" element={<MyShiftTimeline />} />
+
             </Routes>
 
             <Footer />
