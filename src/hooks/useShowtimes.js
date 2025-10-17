@@ -202,10 +202,12 @@ export function useShowtimes(movieId) {
 
   // --- Lập lịch tự động (auto schedule) ---
   const autoSchedule = useCallback(
-    async ({ roomId, date, movieIds = [], occupancyRate }) => {
+    //async ({ roomId, date, movieIds = [], occupancyRate }) => {
+    async ({ roomId, date, movieIds = [] }) => {
       try {
         setLoading(true);
-        const generated = await autoScheduleAPI({ roomId, date, movieIds, occupancyRate });
+        //const generated = await autoScheduleAPI({ roomId, date, movieIds, occupancyRate });
+        const generated = await autoScheduleAPI({ roomId, date, movieIds });
         // Refresh showtimes sau khi generate
         await fetchShowtimes(movieId);
         return generated;

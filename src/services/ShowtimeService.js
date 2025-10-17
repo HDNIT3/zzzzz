@@ -82,13 +82,16 @@ export async function deleteShowtime(showtimeId) {
 }
 
 // --- LẬP LỊCH THÔNG MINH ---
-export async function generateOptimalSchedule(roomId, date, movieIds = [], occupancyRate) {
-  const params = new URLSearchParams();
-  if (roomId) params.append("roomId", roomId);
-  if (date) params.append("date", date);
-  if (movieIds.length > 0) movieIds.forEach(id => params.append("movieIds", id));
-  if (occupancyRate) params.append("occupancyRate", occupancyRate);
+export const generateOptimalSchedule = async ({ roomId, date, movieIds = [], occupancyRate }) => {
+    const params = new URLSearchParams();
+    if (roomId) params.append("roomId", roomId);
+    if (date) params.append("date", date);
+    //if (occupancyRate) params.append("occupancyRate", occupancyRate);
+    movieIds.forEach(id => params.append("movieIds", id));
 
-  const res = await api.post(`/api/showtime/generate-optimal-schedule?${params.toString()}`);
-  return res.data;
+    const url = `/api/showtime/generate-optimal-schedule?${params.toString()}`;
+    console.log("➡️ Calling:", url);
+
+    const response = await api.post(url); // không cần body
+    return response.data;
 }

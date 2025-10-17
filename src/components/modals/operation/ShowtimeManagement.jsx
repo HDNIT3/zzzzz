@@ -35,7 +35,7 @@ export function ShowtimeManagement({ movies }) {
     roomId: "",
     date: new Date().toISOString().split('T')[0],
     movieIds: [],
-    occupancyRate: 0.7
+    //occupancyRate: 0.7
   });
 
   // Generate date range for next 7 days
@@ -171,7 +171,7 @@ export function ShowtimeManagement({ movies }) {
         roomId: autoScheduleData.roomId,
         date: autoScheduleData.date,
         movieIds: autoScheduleData.movieIds,
-        occupancyRate: autoScheduleData.occupancyRate
+        //occupancyRate: autoScheduleData.occupancyRate
       });
       
       alert(`Đã tạo ${result?.length || 0} suất chiếu tự động!`);
@@ -636,21 +636,21 @@ export function ShowtimeManagement({ movies }) {
                 </small>
               </div>
 
-              <div className="showtime-management-form-group">
-                <label className="showtime-management-label">Tỷ Lệ Lấp Đầy Mục Tiêu: {(autoScheduleData.occupancyRate * 100).toFixed(0)}%</label>
-                <input
-                  type="range"
-                  min="0.5"
-                  max="1"
-                  step="0.05"
-                  className="showtime-management-slider"
-                  value={autoScheduleData.occupancyRate}
-                  onChange={(e) => setAutoScheduleData({ ...autoScheduleData, occupancyRate: parseFloat(e.target.value) })}
-                />
-                <small className="showtime-management-hint">
-                  Hệ thống sẽ cố gắng đạt tỷ lệ lấp đầy này cho phòng
-                </small>
-              </div>
+              {/*<div className="showtime-management-form-group">*/}
+              {/*  <label className="showtime-management-label">Tỷ Lệ Lấp Đầy Mục Tiêu: {(autoScheduleData.occupancyRate * 100).toFixed(0)}%</label>*/}
+              {/*  <input*/}
+              {/*    type="range"*/}
+              {/*    min="0.5"*/}
+              {/*    max="1"*/}
+              {/*    step="0.05"*/}
+              {/*    className="showtime-management-slider"*/}
+              {/*    value={autoScheduleData.occupancyRate}*/}
+              {/*    onChange={(e) => setAutoScheduleData({ ...autoScheduleData, occupancyRate: parseFloat(e.target.value) })}*/}
+              {/*  />*/}
+              {/*  <small className="showtime-management-hint">*/}
+              {/*    Hệ thống sẽ cố gắng đạt tỷ lệ lấp đầy này cho phòng*/}
+              {/*  </small>*/}
+              {/*</div>*/}
 
               <div className="showtime-management-modal-footer">
                 <button
