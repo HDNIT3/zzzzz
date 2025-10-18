@@ -1,5 +1,4 @@
-# Multi-stage Dockerfile for React app
-# Build stage
+# Multi-stage build
 FROM node:18-alpine AS build
 WORKDIR /app
 
@@ -11,17 +10,14 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-# Production stage - serve with nginx
-FROM nginx:stable-alpine
+# Serve with built-in Node server (no nginx)
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=build /app/build ./build
 
-# Remove default nginx website
-RUN rm -rf /usr/share/nginx/html/*
+# Install serve to run the app
+RUN npm install -g serve
 
-# Copy built files from build stage
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Add custom nginx config for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port and start
+EXPOSE 3000
+CMD ["serve", "-s", "build", "-l", "3000"]

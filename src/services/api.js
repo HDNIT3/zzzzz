@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080",  // Sử dụng env var
+    baseURL: process.env.REACT_APP_API_URL || "https://sdadasd-production.up.railway.app",  // Sử dụng env var
     headers: {
         "Content-Type": "application/json",
     },
