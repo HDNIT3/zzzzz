@@ -25,3 +25,12 @@ export const uploadAvatar = async (accountId, file) => {
   });
   return res.data;
 };
+
+// [ADD] Simple recommendations (top-genre & top-actor)
+export const getSimpleRecommendations = async (accountId, k = 3) => {
+    const res = await api.get(`/api/profiles/${accountId}/recommendations/simple`, {
+        params: { k },
+    });
+    return res.data; // { byTopGenre: [], byTopActor: [] }
+};
+

@@ -312,4 +312,64 @@
     .profile-me-favorites-grid {
         grid-template-columns: 1fr;
     }
+
+    /* [FIX] Đổi toàn bộ chữ đề xuất thành màu trắng rõ hơn */
+    .rec-title,
+    .rec-col-title,
+    .rec-chip,
+    .rec-strong,
+    .rec-empty,
+    .rec-movie,
+    .rec-meta {
+        color: #ffffff !important;
+    }
+
+    /* riêng icon hoặc emoji giữ nguyên, nên ta chỉ force chữ */
+    .rec-title b,
+    .rec-col-title b,
+    .rec-chip b {
+        color: #ffffff !important;
+    }
+
+    /* [FINAL FIX] Ép toàn bộ chữ trong phần đề xuất thành màu trắng rõ */
+    .rec-card * {
+        color: #ffffff !important;
+    }
+
+    /* Tăng độ sáng tiêu đề và phân cách */
+    .rec-title {
+        color: #ffffff !important;
+        font-weight: 700;
+    }
+
+    .rec-col-title {
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+
+    .rec-chip, .rec-strong {
+        color: #ffffff !important;
+    }
+
+    .rec-movie, .rec-meta {
+        color: #ffffff !important;
+    }
+
+    .rec-empty {
+        color: #ffffff !important;
+        opacity: 0.9;
+    }
+
+    /* Làm viền và nền đậm hơn cho đồng bộ theme */
+    .rec-col {
+        border-color: rgba(255,255,255,0.15) !important;
+        background: rgba(255,255,255,0.05) !important;
+    }
+
+    .rec-item {
+        border-color: rgba(255,255,255,0.15) !important;
+        background: rgba(255,255,255,0.08) !important;
+    }
+
+
 }

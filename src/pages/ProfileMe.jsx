@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getProfile } from "../services/ProfileService";
+import { getProfile, getSimpleRecommendations } from "../services/ProfileService";
 import "../styles/profile-me.css";
 
 export default function ProfileMe() {
@@ -10,6 +10,7 @@ export default function ProfileMe() {
     const navigate = useNavigate();
 
     const [profile, setProfile] = useState(null);
+    const [recs, setRecs] = useState({ byTopGenre: [], byTopActor: [] }); // [ADD]
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -21,11 +22,16 @@ export default function ProfileMe() {
             }
             try {
                 setLoading(true);
-                const data = await getProfile(accountId);
-                setProfile(data);
+                // có thể Promise.all, nhưng để rõ ràng:
+                const prof = await getProfile(accountId);
+                setProfile(prof);
+
+                // [ADD] gọi đề xuất
+                const rec = await getSimpleRecommendations(accountId, 3);
+                setRecs(rec || { byTopGenre: [], byTopActor: [] });
             } catch (err) {
-                console.error("GET profile error:", err);
-                setError("Không thể tải hồ sơ. Kiểm tra BE hoặc DB.");
+                console.error("GET profile/recs error:", err);
+                setError("Không thể tải hồ sơ hoặc đề xuất. Kiểm tra BE/DB.");
             } finally {
                 setLoading(false);
             }
@@ -79,6 +85,12 @@ export default function ProfileMe() {
             </div>
         );
     }
+
+    // helper để lấy “nhãn” top-genre/actor từ reason
+    const topGenreLabel =
+        recs?.byTopGenre?.[0]?.reason?.replace("top-genre: ", "") || "Không xác định";
+    const topActorLabel =
+        recs?.byTopActor?.[0]?.reason?.replace("top-actor: ", "") || "Không xác định";
 
     return (
         <div className="profile-me-container">
@@ -149,10 +161,8 @@ export default function ProfileMe() {
                                     href={item.url || "#"}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className={`profile-me-social-btn ${!item.url ? 'profile-me-social-btn-disabled' : ''}`}
-                                    style={{
-                                        backgroundColor: item.url ? item.color : "#6c757d",
-                                    }}
+                                    className={`profile-me-social-btn ${!item.url ? "profile-me-social-btn-disabled" : ""}`}
+                                    style={{ backgroundColor: item.url ? item.color : "#6c757d" }}
                                 >
                                     {item.label}
                                 </a>
@@ -169,9 +179,7 @@ export default function ProfileMe() {
                 </div>
 
                 {!profile.favorites || profile.favorites.length === 0 ? (
-                    <div className="profile-me-empty-favorites">
-                        Chưa có phim yêu thích.
-                    </div>
+                    <div className="profile-me-empty-favorites">Chưa có phim yêu thích.</div>
                 ) : (
                     <div className="profile-me-favorites-grid">
                         {profile.favorites.map((f, idx) => (
@@ -185,6 +193,65 @@ export default function ProfileMe() {
                     </div>
                 )}
             </div>
+
+            {/* Recommendations */}
+            <div className="profile-me-card rec-card">
+                <div className="rec-header">
+                    <h4 className="rec-title" style={{ color: "white" }}>🎬 Phim đề xuất cho bạn</h4>
+
+                    <div className="rec-sub">
+                        <span className="rec-chip" style={{ color: "white" }}>
+                            📚 Thể loại nổi bật: <b className="rec-strong" style={{ color: "white" }}>{topGenreLabel}</b>
+                        </span>
+                        <span className="rec-chip" style={{ color: "white", marginLeft: 12 }}>
+                            🧑‍🎤 Diễn viên nổi bật: <b className="rec-strong" style={{ color: "white" }}>{topActorLabel}</b>
+                        </span>
+                    </div>
+                </div>
+
+                <div className="rec-columns">
+                    {/* By Genre */}
+                    <div className="rec-col">
+                        <div className="rec-col-title" style={{ color: "white" }}>📗 Theo thể loại:</div>
+
+                        {!recs?.byTopGenre || recs.byTopGenre.length === 0 ? (
+                            <div className="rec-empty" style={{ color: "white" }}>Không có đề xuất theo thể loại.</div>
+                        ) : (
+                            <ul className="rec-list">
+                                {recs.byTopGenre.map((m) => (
+                                    <li key={m.movieId} className="rec-item" style={{ color: "white" }}>
+                                        <span className="rec-movie" style={{ color: "white" }}>{m.title}</span>
+                                        <span className="rec-meta" style={{ color: "white", marginLeft: 8 }}>
+                                            ⭐ {m.avgRating} • {m.releaseDate}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    {/* By Actor */}
+                    <div className="rec-col">
+                        <div className="rec-col-title" style={{ color: "white" }}>🎭 Theo diễn viên:</div>
+
+                        {!recs?.byTopActor || recs.byTopActor.length === 0 ? (
+                            <div className="rec-empty" style={{ color: "white" }}>Không có đề xuất theo diễn viên.</div>
+                        ) : (
+                            <ul className="rec-list">
+                                {recs.byTopActor.map((m) => (
+                                    <li key={m.movieId} className="rec-item" style={{ color: "white" }}>
+                                        <span className="rec-movie" style={{ color: "white" }}>{m.title}</span>
+                                        <span className="rec-meta" style={{ color: "white", marginLeft: 8 }}>
+                                            ⭐ {m.avgRating} • {m.releaseDate}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 }
