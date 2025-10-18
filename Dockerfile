@@ -10,15 +10,16 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-# Serve with built-in Node server (fixed for Railway)
+# Serve with built-in Node server (FIXED FOR RAILWAY)
 FROM node:18-alpine
 WORKDIR /app
 COPY --from=build /app/build ./build
 
-# Install serve globally
-RUN npm install -g serve
+# Install serve globally (latest version)
+RUN npm install -g serve@latest
 
-# Expose dynamic PORT
-EXPOSE $PORT
+# Expose port 8080 (Railway default)
+EXPOSE 8080
 
-CMD ["sh", "-c", "serve -s build -l $PORT --listen-tcp 0.0.0.0"]
+# FIXED CMD - No --listen-tcp, use $PORT env
+CMD ["sh", "-c", "serve -s build -l $PORT"]
