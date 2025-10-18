@@ -21,5 +21,4 @@ RUN npm install -g serve
 # Expose dynamic PORT
 EXPOSE $PORT
 
-# Start serve on 0.0.0.0:$PORT (Railway injects PORT env var)
 CMD ["sh", "-c", "serve -s build -l $PORT --listen-tcp 0.0.0.0"]
