@@ -1,7 +1,7 @@
 ﻿import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://sdadasd-production.up.railway.app/",  // Sử dụng env var
+    baseURL: "https://backendtest-production-aaf4.up.railway.app/",  // Sử dụng env var
     headers: {
         "Content-Type": "application/json",
     },
